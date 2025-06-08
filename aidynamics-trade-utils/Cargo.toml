@@ -1,0 +1,89 @@
+[package]
+name = "aidynamics-trade-utils"
+version = "0.2.0"
+edition = "2021"
+authors = ["DeepTech Capital Management <research@dtcm.ai>"]
+categories = ["finance", "algorithm", "algorithmic trading", "algotrade"]
+description = "Angel One SDK Utils"
+documentation = "https://github.com/dtcm-ai/aidynamics-trade"
+homepage = "https://www.dtcm.ai"
+keywords = ["angelone", "algotrading", "trading", "stocks", "investment", "api"]
+license = "MIT OR Apache-2.0"
+readme = "crates-io.md"
+rust-version = "1.74"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+log = "0.4"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.11", features = ["json", "gzip", "brotli", "deflate", "default-tls"] }
+# tokio-tungstenite = { version = "0.21", features = ["tls"] }
+tokio-tungstenite = { version = "0.17", features = ["native-tls"] }
+
+futures-util = { version = "0.3", features = ["sink"] }
+local-ip-address = "0.5"
+mac_address = "1.1"
+totp-rs = "5.0"
+async-trait = "0.1"
+chrono = "0.4"
+tokio = { version = "1", features = ["net", "sync", "io-util", "rt-multi-thread", "time"] }
+tokio-stream = "0.1"
+pin-project = "1.0"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+
+
+
+# [dependencies.log]
+# version = "0.4"
+
+# [dependencies.serde]
+# version = "1"
+# features = ["derive"]
+
+# [dependencies.serde_json]
+# version = "1"
+
+# [dependencies.reqwest]
+# version = "0.11"
+# features = ["json", "gzip", "brotli", "deflate","default-tls"]
+
+# [dependencies.tokio-tungstenite]
+# version = "0.21"
+# features = ["tls"]
+
+# [dependencies.futures-util]
+# version = "0.3"
+# features = ["sink"]
+
+# [dependencies.local-ip-address]
+# version = "0.5"
+
+# [dependencies.mac_address]
+# version = "1.1"
+
+# [dependencies.totp-rs]
+# version = "5.0"
+
+# [dependencies.async-trait]
+# version = "0.1"
+
+# [dependencies.chrono]
+# version = "0.4"
+
+# [dependencies.tokio]
+# version = "1"
+# features = ["net", "sync", "io-util", "rt-multi-thread", "time"]
+
+# [dependencies.tokio-stream]
+# version = "0.1"
+
+# [dependencies.pin-project]
+# version = "1.0"
+
+# [dev-dependencies.tokio]
+# version = "1"
+# features = ["macros", "rt-multi-thread"]

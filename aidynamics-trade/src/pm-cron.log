@@ -1,0 +1,201 @@
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [aidynamics-trade](ids: [ 75 ])
+[PM2] [aidynamics-trade](75) ✓
+┌─────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id  │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├─────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 100 │ aidynamics-api        │ default     │ 1.0.0   │ cluster │ 816319   │ 3m     │ 1    │ online    │ 0%       │ 56.8mb   │ admin    │ disabled │
+│ 101 │ aidynamics-api        │ default     │ 1.0.0   │ cluster │ 816320   │ 3m     │ 1    │ online    │ 0%       │ 56.4mb   │ admin    │ disabled │
+│ 102 │ aidynamics-api        │ default     │ 1.0.0   │ cluster │ 816351   │ 3m     │ 1    │ online    │ 0%       │ 56.7mb   │ admin    │ disabled │
+│ 103 │ aidynamics-api        │ default     │ 1.0.0   │ cluster │ 816357   │ 3m     │ 1    │ online    │ 0%       │ 56.7mb   │ admin    │ disabled │
+│ 66  │ aidynamics-control    │ default     │ N/A     │ fork    │ 816414   │ 0s     │ 17   │ online    │ 0%       │ 4.0kb    │ admin    │ disabled │
+│ 75  │ aidynamics-trade      │ default     │ N/A     │ fork    │ 816413   │ 0s     │ 2    │ online    │ 0%       │ 4.0kb    │ admin    │ disabled │
+└─────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [aidynamics-trade](ids: [ 75 ])
+[PM2] [aidynamics-trade](75) ✓
+┌────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 66 │ aidynamics-control    │ default     │ N/A     │ fork    │ 836729   │ 0s     │ 18   │ online    │ 0%       │ 3.1mb    │ admin    │ disabled │
+│ 75 │ aidynamics-trade      │ default     │ N/A     │ fork    │ 836728   │ 0s     │ 3    │ online    │ 0%       │ 2.9mb    │ admin    │ disabled │
+└────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2][WARN] Current process list is not synchronized with saved list. App aidynamics-api aidynamics-api aidynamics-api aidynamics-api differs. Type 'pm2 save' to synchronize.
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [aidynamics-trade](ids: [ 75 ])
+[PM2] [aidynamics-trade](75) ✓
+┌────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 66 │ aidynamics-control    │ default     │ N/A     │ fork    │ 854517   │ 0s     │ 19   │ online    │ 0%       │ 252.0kb  │ admin    │ disabled │
+│ 75 │ aidynamics-trade      │ default     │ N/A     │ fork    │ 854516   │ 0s     │ 4    │ online    │ 0%       │ 4.0kb    │ admin    │ disabled │
+└────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2][WARN] Current process list is not synchronized with saved list. App aidynamics-api aidynamics-api aidynamics-api aidynamics-api differs. Type 'pm2 save' to synchronize.
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [aidynamics-trade](ids: [ 105 ])
+[PM2] [aidynamics-trade](105) ✓
+┌─────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id  │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├─────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 66  │ aidynamics-control    │ default     │ N/A     │ fork    │ 874144   │ 0s     │ 20   │ online    │ 0%       │ 1.1mb    │ admin    │ disabled │
+│ 105 │ aidynamics-trade      │ default     │ N/A     │ fork    │ 874143   │ 0s     │ 1    │ online    │ 0%       │ 1.1mb    │ admin    │ disabled │
+└─────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2][WARN] Current process list is not synchronized with saved list. App aidynamics-api aidynamics-api aidynamics-api aidynamics-api differs. Type 'pm2 save' to synchronize.
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [aidynamics-trade](ids: [ 107 ])
+[PM2] [aidynamics-trade](107) ✓
+┌─────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id  │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├─────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 66  │ aidynamics-control    │ default     │ N/A     │ fork    │ 903507   │ 0s     │ 21   │ online    │ 0%       │ 19.1mb   │ admin    │ disabled │
+│ 107 │ aidynamics-trade      │ default     │ N/A     │ fork    │ 903506   │ 0s     │ 1    │ online    │ 0%       │ 19.1mb   │ admin    │ disabled │
+└─────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2][WARN] Current process list is not synchronized with saved list. App aidynamics-api aidynamics-api aidynamics-api aidynamics-api differs. Type 'pm2 save' to synchronize.
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [aidynamics-trade](ids: [ 107 ])
+[PM2] [aidynamics-trade](107) ✓
+┌─────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id  │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├─────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 66  │ aidynamics-control    │ default     │ N/A     │ fork    │ 939748   │ 0s     │ 22   │ online    │ 0%       │ 256.0kb  │ admin    │ disabled │
+│ 107 │ aidynamics-trade      │ default     │ N/A     │ fork    │ 939749   │ 0s     │ 2    │ online    │ 0%       │ 3.0mb    │ admin    │ disabled │
+└─────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2][WARN] Current process list is not synchronized with saved list. App aidynamics-api aidynamics-api aidynamics-api aidynamics-api differs. Type 'pm2 save' to synchronize.
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [aidynamics-trade](ids: [ 107 ])
+[PM2] [aidynamics-trade](107) ✓
+┌─────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id  │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├─────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 66  │ aidynamics-control    │ default     │ N/A     │ fork    │ 956997   │ 0s     │ 23   │ online    │ 50%      │ 29.1mb   │ admin    │ disabled │
+│ 107 │ aidynamics-trade      │ default     │ N/A     │ fork    │ 957004   │ 0s     │ 3    │ online    │ 0%       │ 19.1mb   │ admin    │ disabled │
+└─────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2][WARN] Current process list is not synchronized with saved list. App aidynamics-api aidynamics-api aidynamics-api aidynamics-api differs. Type 'pm2 save' to synchronize.
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [aidynamics-trade](ids: [ 107 ])
+[PM2] [aidynamics-trade](107) ✓
+┌─────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id  │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├─────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 66  │ aidynamics-control    │ default     │ N/A     │ fork    │ 973552   │ 0s     │ 24   │ online    │ 50%      │ 28.1mb   │ admin    │ disabled │
+│ 107 │ aidynamics-trade      │ default     │ N/A     │ fork    │ 973558   │ 0s     │ 4    │ online    │ 0%       │ 7.8mb    │ admin    │ disabled │
+└─────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2][WARN] Current process list is not synchronized with saved list. App aidynamics-api aidynamics-api aidynamics-api aidynamics-api differs. Type 'pm2 save' to synchronize.
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [aidynamics-trade](ids: [ 107 ])
+[PM2] [aidynamics-trade](107) ✓
+┌─────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id  │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├─────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 66  │ aidynamics-control    │ default     │ N/A     │ fork    │ 989689   │ 0s     │ 25   │ online    │ 0%       │ 1.1mb    │ admin    │ disabled │
+│ 107 │ aidynamics-trade      │ default     │ N/A     │ fork    │ 989690   │ 0s     │ 5    │ online    │ 0%       │ 1.1mb    │ admin    │ disabled │
+└─────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2][WARN] Current process list is not synchronized with saved list. App aidynamics-api aidynamics-api aidynamics-api aidynamics-api differs. Type 'pm2 save' to synchronize.
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [aidynamics-trade](ids: [ 107 ])
+[PM2] [aidynamics-trade](107) ✓
+┌─────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id  │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├─────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 66  │ aidynamics-control    │ default     │ N/A     │ fork    │ 1007149  │ 0s     │ 26   │ online    │ 0%       │ 3.3mb    │ admin    │ disabled │
+│ 107 │ aidynamics-trade      │ default     │ N/A     │ fork    │ 1007148  │ 0s     │ 6    │ online    │ 0%       │ 7.8mb    │ admin    │ disabled │
+└─────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2][WARN] Current process list is not synchronized with saved list. App aidynamics-api aidynamics-api aidynamics-api aidynamics-api differs. Type 'pm2 save' to synchronize.
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [aidynamics-trade](ids: [ 107 ])
+[PM2] [aidynamics-trade](107) ✓
+┌─────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id  │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├─────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 66  │ aidynamics-control    │ default     │ N/A     │ fork    │ 1022415  │ 0s     │ 27   │ online    │ 0%       │ 2.9mb    │ admin    │ disabled │
+│ 107 │ aidynamics-trade      │ default     │ N/A     │ fork    │ 1022416  │ 0s     │ 7    │ online    │ 0%       │ 728.0kb  │ admin    │ disabled │
+└─────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2][WARN] Current process list is not synchronized with saved list. App aidynamics-api aidynamics-api aidynamics-api aidynamics-api differs. Type 'pm2 save' to synchronize.
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [aidynamics-trade](ids: [ 107 ])
+[PM2] [aidynamics-trade](107) ✓
+┌─────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id  │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├─────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 66  │ aidynamics-control    │ default     │ N/A     │ fork    │ 1040656  │ 0s     │ 28   │ online    │ 100%     │ 38.2mb   │ admin    │ disabled │
+│ 107 │ aidynamics-trade      │ default     │ N/A     │ fork    │ 1040663  │ 0s     │ 8    │ online    │ 0%       │ 13.5mb   │ admin    │ disabled │
+└─────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2][WARN] Current process list is not synchronized with saved list. App aidynamics-api aidynamics-api aidynamics-api aidynamics-api differs. Type 'pm2 save' to synchronize.
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [aidynamics-trade](ids: [ 107 ])
+[PM2] [aidynamics-trade](107) ✓
+┌─────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id  │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├─────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 66  │ aidynamics-control    │ default     │ N/A     │ fork    │ 0        │ 0      │ 28   │ stopping  │ 0%       │ 0b       │ admin    │ disabled │
+│ 107 │ aidynamics-trade      │ default     │ N/A     │ fork    │ 1059062  │ 0s     │ 9    │ online    │ 0%       │ 1016.0k… │ admin    │ disabled │
+└─────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2][WARN] Current process list is not synchronized with saved list. App aidynamics-api aidynamics-api aidynamics-api aidynamics-api differs. Type 'pm2 save' to synchronize.
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [aidynamics-trade](ids: [ 107 ])
+[PM2] [aidynamics-trade](107) ✓
+┌─────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id  │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├─────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 66  │ aidynamics-control    │ default     │ N/A     │ fork    │ 1077238  │ 0s     │ 30   │ online    │ 0%       │ 7.8mb    │ admin    │ disabled │
+│ 107 │ aidynamics-trade      │ default     │ N/A     │ fork    │ 1077239  │ 0s     │ 10   │ online    │ 0%       │ 16.3mb   │ admin    │ disabled │
+└─────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2][WARN] Current process list is not synchronized with saved list. App aidynamics-api aidynamics-api aidynamics-api aidynamics-api differs. Type 'pm2 save' to synchronize.
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [aidynamics-trade](ids: [ 107 ])
+[PM2] [aidynamics-trade](107) ✓
+┌─────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id  │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├─────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 66  │ aidynamics-control    │ default     │ N/A     │ fork    │ 1095143  │ 0s     │ 31   │ online    │ 0%       │ 18.2mb   │ admin    │ disabled │
+│ 107 │ aidynamics-trade      │ default     │ N/A     │ fork    │ 1095142  │ 0s     │ 11   │ online    │ 0%       │ 18.2mb   │ admin    │ disabled │
+└─────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2][WARN] Current process list is not synchronized with saved list. App aidynamics-api aidynamics-api aidynamics-api aidynamics-api differs. Type 'pm2 save' to synchronize.
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [aidynamics-trade](ids: [ 107 ])
+[PM2] [aidynamics-trade](107) ✓
+┌─────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id  │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├─────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 66  │ aidynamics-control    │ default     │ N/A     │ fork    │ 0        │ 0      │ 31   │ stopping  │ 0%       │ 0b       │ admin    │ disabled │
+│ 107 │ aidynamics-trade      │ default     │ N/A     │ fork    │ 1114312  │ 0s     │ 12   │ online    │ 0%       │ 1.1mb    │ admin    │ disabled │
+└─────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2][WARN] Current process list is not synchronized with saved list. App aidynamics-api aidynamics-api aidynamics-api aidynamics-api differs. Type 'pm2 save' to synchronize.
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [aidynamics-trade](ids: [ 107 ])
+[PM2] [aidynamics-trade](107) ✓
+┌─────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id  │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├─────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 66  │ aidynamics-control    │ default     │ N/A     │ fork    │ 1130608  │ 0s     │ 33   │ online    │ 50%      │ 30.1mb   │ admin    │ disabled │
+│ 107 │ aidynamics-trade      │ default     │ N/A     │ fork    │ 1130614  │ 0s     │ 13   │ online    │ 0%       │ 18.7mb   │ admin    │ disabled │
+└─────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2][WARN] Current process list is not synchronized with saved list. App aidynamics-api aidynamics-api aidynamics-api aidynamics-api differs. Type 'pm2 save' to synchronize.
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [trade](ids: [ 124 ])
+[PM2] [trade](124) ✓
+┌─────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id  │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├─────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 66  │ aidynamics-control    │ default     │ N/A     │ fork    │ 1130608  │ 24h    │ 33   │ online    │ 0%       │ 20.8mb   │ admin    │ disabled │
+│ 120 │ api                   │ default     │ 1.0.0   │ cluster │ 1146820  │ 3m     │ 1    │ online    │ 0%       │ 56.2mb   │ admin    │ disabled │
+│ 121 │ api                   │ default     │ 1.0.0   │ cluster │ 1146821  │ 3m     │ 1    │ online    │ 7.7%     │ 56.3mb   │ admin    │ disabled │
+│ 122 │ api                   │ default     │ 1.0.0   │ cluster │ 1146852  │ 3m     │ 1    │ online    │ 0%       │ 56.9mb   │ admin    │ disabled │
+│ 123 │ api                   │ default     │ 1.0.0   │ cluster │ 1146853  │ 3m     │ 1    │ online    │ 0%       │ 56.4mb   │ admin    │ disabled │
+│ 124 │ trade                 │ default     │ N/A     │ fork    │ 1146907  │ 0s     │ 1    │ online    │ 0%       │ 1.1mb    │ admin    │ disabled │
+└─────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2][WARN] Current process list is not synchronized with saved list. App aidynamics-api aidynamics-api aidynamics-api aidynamics-api aidynamics-trade differs. Type 'pm2 save' to synchronize.
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [trade](ids: [ 124 ])
+[PM2] [trade](124) ✓
+┌─────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id  │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├─────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 66  │ aidynamics-control    │ default     │ N/A     │ fork    │ 1130608  │ 47h    │ 33   │ online    │ 0%       │ 20.8mb   │ admin    │ disabled │
+│ 157 │ api                   │ default     │ 1.0.0   │ cluster │ 1171890  │ 2m     │ 1    │ online    │ 0%       │ 97.9mb   │ admin    │ disabled │
+│ 158 │ api                   │ default     │ 1.0.0   │ cluster │ 1171891  │ 2m     │ 1    │ online    │ 0%       │ 98.5mb   │ admin    │ disabled │
+│ 159 │ api                   │ default     │ 1.0.0   │ cluster │ 1171914  │ 2m     │ 1    │ online    │ 0%       │ 98.0mb   │ admin    │ disabled │
+│ 160 │ api                   │ default     │ 1.0.0   │ cluster │ 1171915  │ 2m     │ 1    │ online    │ 0%       │ 102.2mb  │ admin    │ disabled │
+│ 124 │ trade                 │ default     │ N/A     │ fork    │ 1172024  │ 0s     │ 2    │ online    │ 0%       │ 1.1mb    │ admin    │ disabled │
+└─────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2][WARN] Current process list is not synchronized with saved list. App aidynamics-api aidynamics-api aidynamics-api aidynamics-api aidynamics-trade differs. Type 'pm2 save' to synchronize.

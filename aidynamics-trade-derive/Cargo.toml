@@ -1,0 +1,31 @@
+[package]
+name = "aidynamics-trade-derive"
+version = "0.2.0"
+edition = "2021"
+authors = ["DeepTech Capital Management <research@dtcm.ai>"]
+categories = ["finance", "algorithm", "algorithmic trading", "algotrade"]
+description = "Macros implementation of for Angel One SDK APIs"
+documentation = "https://github.com/dtcm-ai/aidynamics-trade"
+homepage = "https://www.dtcm.ai"
+keywords = ["angelone", "algotrading", "trading", "stocks", "investment", "api"]
+license = "MIT OR Apache-2.0"
+readme = "crates-io.md"
+rust-version = "1.74"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "aidynamics_trade_derive"
+proc-macro = true
+
+[dependencies.proc-macro2]
+version = "1.0"
+
+[dependencies.syn]
+version = "2.0"
+features = ["parsing"]
+
+[dependencies.quote]
+version = "1.0"
+
+[dev-dependencies.aidynamics-trade-utils]
+path = "../aidynamics-trade-utils"
