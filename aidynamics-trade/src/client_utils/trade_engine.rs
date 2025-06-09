@@ -6,7 +6,6 @@ use serde_json::{from_value, Result as SerdeResult, Value};
 
 use crate::{
     order::{OrderSetter, PlaceOrderReq},
-    // Result,
     redis_utils::Signal,
     types::{ExchangeType, ProductType, TransactionType},
     websocket::angel_one_websocket::SubscriptionExchange,

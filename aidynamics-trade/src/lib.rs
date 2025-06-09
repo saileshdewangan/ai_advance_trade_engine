@@ -28,6 +28,8 @@ pub mod types;
 mod client_utils;
 pub use client_utils::trade_handler;
 pub use client_utils::trade_engine;
+pub use client_utils::client_node;
+
 
 mod server_utils;
 pub use server_utils::{OrderPlacedType,end_points};

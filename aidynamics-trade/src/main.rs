@@ -69,6 +69,7 @@ use tokio_tungstenite::{connect_async, WebSocketStream};
 // use tokio::sync::mpsc;
 // use tokio_tungstenite::tungstenite::protocol::Message;
 // use tokio_tungstenite::connect_async;
+use aidynamics_trade::client_node::ClientNode;
 use redis::{AsyncCommands, Commands, RedisResult};
 use tracing_subscriber::Layer;
 use tracing_subscriber::{fmt, layer::SubscriberExt, Registry};
@@ -442,7 +443,6 @@ async fn main() {
 
     /// Creating a HashMap of Shared TradeEngine.
     /// Which value can only be chaned by main channel
-
     let redis_conn_url_clone = redis_conn_url.clone();
 
     // let redUt = RedisUtils::init(redis_conn_url, rx_redis, tx_main_clone).await;
@@ -546,11 +546,88 @@ async fn main() {
     async fn receive_messages(
         rx_main: &mut Receiver<Signal>,
         tx_broadcast_clone: Arc<tokio::sync::broadcast::Sender<Signal>>,
+        tx_aows: Sender<Signal>,
+        tx_main: Sender<Signal>,
+        tx_redis: Sender<Signal>,
+        tx_order_processor: Sender<Signal>,
     ) {
+        let mut client_nodes: HashMap<u32, ClientNode> = HashMap::new();
         //     let mut trade_handlers: Vec<TradeEngine> = Vec::new();
         while let Some(msg) = rx_main.recv().await {
             println!("\nReceived by main : {:?}", msg);
-            tx_broadcast_clone.send(msg).unwrap();
+            let msg_clone = msg.clone();
+            match msg_clone {
+                Signal::NewTradeEngine(new_engine) => {
+                    let engine = new_engine.clone();
+                    let client_id = engine.client_id;
+                    let trade_engine_id = engine.trade_engine_id;
+
+                    if let Some(client_node) = client_nodes.get_mut(&client_id) {
+                        // If the client exists, check if it already has the TradeEngine
+                        if !client_node.trade_engines.contains_key(&trade_engine_id) {
+                            client_node
+                                .trade_engines
+                                .insert(trade_engine_id, engine.clone());
+
+                            client_node.active_trade_ids.insert(trade_engine_id);
+                            client_node.handler_ids.remove(&trade_engine_id);
+                        }
+                    } else {
+                        // If the client doesn't exist, create a new ClientNode
+                        let mut trade_engines = HashMap::new();
+                        trade_engines.insert(trade_engine_id, engine.clone());
+                        let new_node = ClientNode {
+                            client_id,
+                            trade_engines,
+                            rx_broadcast: tx_broadcast_clone.subscribe(),
+                            tx_broadcast: tx_broadcast_clone.clone(),
+                            tx_main: tx_main.clone(),
+                            tx_redis: tx_redis.clone(),
+                            tx_angelone_sender: tx_aows.clone(),
+                            tx_order_processor: tx_order_processor.clone(),
+                            active_trade_ids: {
+                                let mut set = HashSet::new();
+                                set.insert(trade_engine_id);
+                                set
+                            },
+                            handler_ids: HashSet::new(),
+                            strategy_to_process: engine.strategy.clone(),
+                        };
+
+                        client_nodes.insert(client_id, new_node);
+
+                        let mut new_trade_engines = HashMap::new();
+                        new_trade_engines.insert(trade_engine_id, engine.clone());
+                        let mut new_client_node = ClientNode {
+                            client_id,
+                            trade_engines: new_trade_engines,
+                            rx_broadcast: tx_broadcast_clone.subscribe(),
+                            tx_broadcast: tx_broadcast_clone.clone(),
+                            tx_main: tx_main.clone(),
+                            tx_redis: tx_redis.clone(),
+                            tx_angelone_sender: tx_aows.clone(),
+                            tx_order_processor: tx_order_processor.clone(),
+                            active_trade_ids: {
+                                let mut set = HashSet::new();
+                                set.insert(trade_engine_id);
+                                set
+                            },
+                            handler_ids: HashSet::new(),
+                            strategy_to_process: engine.strategy.clone(),
+                        };
+
+                        tokio::spawn(async move {
+                            new_client_node.process_engine().await;
+                        });
+                    }
+                    tx_broadcast_clone.send(msg);
+                }
+
+                // Forward all other messages to the broadcast channel
+                _ => {
+                    tx_broadcast_clone.send(msg);
+                }
+            }
         }
     };
 
@@ -558,37 +635,20 @@ async fn main() {
     let tx_main_cln = tx_main.clone();
     let tx_redis_clone = tx_redis.clone();
     let tx_broadcast_arc_clone = tx_broadcast_arc.clone();
-
+    let tx_op_main = tx_order_processor.clone();
+    let tx_aows_main = tx_aows.clone();
+    let tx_redis_main = tx_redis.clone();
     tokio::spawn(async move {
-        receive_messages(&mut rx_main, tx_broadcast_arc_clone).await;
+        receive_messages(
+            &mut rx_main,
+            tx_broadcast_arc_clone,
+            tx_aows_main.clone(),
+            tx_main_cln,
+            tx_redis_main,
+            tx_op_main,
+        )
+        .await;
         // sleep(Duration::from_secs(5));
-    });
-
-    // Spawn another task for startegy 1
-    let tx_main_1 = tx_main.clone();
-    let tx_redis_1 = tx_redis.clone();
-    let client_1 = client.clone();
-    let tx_aows_1 = tx_aows.clone();
-    let tx_op_clone_1 = tx_order_processor.clone();
-    let trade_handlers_1: HashMap<u32, TradeEngine> = HashMap::new();
-    let active_trade_ids_1 = HashSet::new();
-    let handler_ids_1: HashSet<u32> = HashSet::new();
-
-    let mut engine_processor_1 = EngineProcessor::new(
-        Strategy::Momentum,
-        tx_broadcast_arc.clone(),
-        tx_main_1,
-        tx_redis_1,
-        client_1,
-        tx_aows_1,
-        tx_op_clone_1,
-        trade_handlers_1,
-        active_trade_ids_1,
-        handler_ids_1,
-    );
-
-    tokio::spawn(async move {
-        engine_processor_1.process_engine(rx_strategy_1).await;
     });
 
     // Spawn another task for startegy 2

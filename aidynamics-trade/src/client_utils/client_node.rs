@@ -1,6 +1,6 @@
 use crate::redis_utils::Signal;
-use crate::trade_engine::{Strategy, TradeStatus};
 use crate::trade_engine::TradeEngine;
+use crate::trade_engine::{Strategy, TradeStatus};
 use crate::types::ExchangeType;
 use crate::types::TransactionType;
 use crate::websocket::angel_one_websocket::{
@@ -9,7 +9,6 @@ use crate::websocket::angel_one_websocket::{
 use chrono::Utc;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
-use tokio::sync::mpsc::Receiver;
 use tokio::sync::mpsc::Sender;
 use tracing::{error, info};
 
@@ -71,7 +70,7 @@ pub struct ClientNode {
     pub trade_engines: HashMap<u32, TradeEngine>,
 
     /// Broadcast receiver for messages
-    pub rx_broadcast: Receiver<Signal>,
+    pub rx_broadcast: tokio::sync::broadcast::Receiver<Signal>,
 
     /// Sender for broadcasting signals to multiple receivers.
     pub tx_broadcast: Arc<tokio::sync::broadcast::Sender<Signal>>,
@@ -83,7 +82,7 @@ pub struct ClientNode {
     pub tx_redis: Sender<Signal>,
 
     /// Sender for sending signals to the AngelOne service.
-    tx_angelone_sender: Sender<Signal>,
+    pub tx_angelone_sender: Sender<Signal>,
 
     /// Sender for sending signals to the order processing component.
     pub tx_order_processor: Sender<Signal>,
@@ -114,7 +113,7 @@ impl ClientNode {
         tx_redis: Sender<Signal>,
         tx_order_processor: Sender<Signal>,
         active_trade_ids: HashSet<u32>,
-        rx_broadcast: Receiver<Signal>,
+        rx_broadcast: tokio::sync::broadcast::Receiver<Signal>,
         strategy_to_process: Strategy,
         handler_ids: HashSet<u32>,
         tx_angelone_sender: Sender<Signal>,
@@ -136,12 +135,11 @@ impl ClientNode {
 
     /// Handles all operations of engine according to strategy in seperate task
     /// Signals are received here excluding PriceFeed
-    pub async fn process_engine(
-        &mut self,
-        mut broadcast_recv: tokio::sync::broadcast::Receiver<Signal>,
-    ) {
-        while let message = broadcast_recv.recv().await {
+    pub async fn process_engine(&mut self) {
+        loop {
+            // while let message = self.rx_broadcast.recv().await {
             // Process the message
+            let message = self.rx_broadcast.recv().await;
             match message {
                 Ok(msg) => {
                     // println!("Broadcast = {:?}", msg);
@@ -336,7 +334,7 @@ impl ClientNode {
                                             // Update active_trade_ids (need a way to communicate back if needed)
                                             // active_trade_ids_clone.insert(*id); // Cannot modify outside the spawned task
 
-                                            tx_broadcast.send(Signal::UpdateActiveTrades(
+                                            let _ = tx_broadcast.send(Signal::UpdateActiveTrades(
                                                 existing_engine.clone(),
                                             ));
 

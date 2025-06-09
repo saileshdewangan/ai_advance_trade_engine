@@ -502,23 +502,14 @@ impl RedisUtils {
     pub async fn init(
         redis_url: String,
         mut rx: mpsc::Receiver<Signal>,
-        _tx: mpsc::Sender<Signal>,
-        tx_broadcast: Arc<tokio::sync::broadcast::Sender<Signal>>,
+        tx: mpsc::Sender<Signal>,
+        _tx_broadcast: Arc<tokio::sync::broadcast::Sender<Signal>>,
     ) {
-        // let tx_clone = tx.clone();
-        let tx_clone = tx_broadcast.clone();
+        let tx_clone = tx.clone();
+        // let tx_clone = tx_broadcast.clone();
 
         let client = redis::Client::open(redis_url.as_str()).expect("Invalid connection URL");
-        // .get_async_connection()
-        // .await
-        // .unwrap();
-
-        // let mut con = connect();
-        // let channel = String::from("broadcast");
-        // let message = String::from("Hello from Rust!");
-
-        // let channel_clone = channel.clone();
-
+      
         let _redis_url_clone = redis_url.clone();
 
         let mut con = client.get_multiplexed_async_connection().await.unwrap();
@@ -545,7 +536,7 @@ impl RedisUtils {
                         let message: String = msg.get_payload().unwrap();
                         match serde_json::from_str::<NewMessage>(&message) {
                             Ok(msg) => {
-                                tx_clone.send(msg.signal).unwrap();
+                                tx_clone.send(msg.signal).await.unwrap();
                                 // Handle each signal
                                 // match msg.signal {
                                 //     Signal::Ping => {
