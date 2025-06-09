@@ -150,7 +150,7 @@ impl ClientNode {
                             for trade_engine_id in active_ids {
                                 // if let Some(handler) = self.trade_engines.get_mut(&trade_engine_id) {
                                 {
-                                    if let Some(mut handler) =
+                                    if let Some(handler) =
                                         self.trade_engines.get_mut(&trade_engine_id)
                                     {
                                         // self.check_trade_conditions(
@@ -290,7 +290,7 @@ impl ClientNode {
                                         existing_engine.update_values().await;
 
                                         existing_engine.trade_id = trade_res.trade_id;
-                                        existing_engine.prepare_exit_req();
+                                        existing_engine.prepare_exit_req().await;
 
                                         self.active_trade_ids.insert(trade_res.trade_engine_id);
 
@@ -379,18 +379,20 @@ impl ClientNode {
                             }
                         }
                         Signal::UpdateMargin { client_id, margin } => {
-                            for id in self.active_trade_ids.clone() {
-                                if let Some(handler) = self.trade_engines.get_mut(&id) {
-                                    if handler.client_id == client_id {
-                                        handler.margin = margin;
-                                        info!("Margin received {:?}", margin)
+                            if (client_id != 0) {
+                                for id in self.active_trade_ids.clone() {
+                                    if let Some(handler) = self.trade_engines.get_mut(&id) {
+                                        if handler.client_id == client_id {
+                                            handler.margin = margin;
+                                            info!("Margin received {:?}", margin)
+                                        }
                                     }
                                 }
-                            }
-                            for id in self.handler_ids.clone() {
-                                if let Some(handler) = self.trade_engines.get_mut(&id) {
-                                    if handler.client_id == client_id {
-                                        handler.margin = margin
+                                for id in self.handler_ids.clone() {
+                                    if let Some(handler) = self.trade_engines.get_mut(&id) {
+                                        if handler.client_id == client_id {
+                                            handler.margin = margin
+                                        }
                                     }
                                 }
                             }
@@ -406,7 +408,7 @@ impl ClientNode {
                                         handler.update_values().await;
                                         handler.trade_id = resp.trade_id;
                                         handler.executed_trades += 1;
-                                        handler.prepare_exit_req();
+                                        handler.prepare_exit_req().await;
                                         handler.execution_time = Utc::now().timestamp();
                                         self.active_trade_ids.insert(resp.trade_engine_id);
                                     }
@@ -465,7 +467,7 @@ impl ClientNode {
                             transaction_type,
                             trigger_price,
                         } => {
-                            if strategy == self.strategy_to_process {
+                            // if strategy == self.strategy_to_process {
                                 let mut trade_handlers_clone = self.trade_engines.clone(); // Clone trade_handlers
                                 let tx_broadcast = self.tx_broadcast.clone();
                                 let active_trade_ids = self.active_trade_ids.clone();
@@ -490,10 +492,10 @@ impl ClientNode {
                                                 handler.symbol_token = String::from("");
                                                 handler.trigger_price = 0.0;
                                                 handler.trading_symbol = String::from("");
-                                                handler.stop_loss_price - 0.0;
-                                                tx_broadcast.send(Signal::UpdateActiveTrades(
-                                                    handler.clone(),
-                                                ));
+                                                let _ = handler.stop_loss_price - 0.0;
+                                                let _ = tx_broadcast.send(
+                                                    Signal::UpdateActiveTrades(handler.clone()),
+                                                );
                                                 // self.active_trade_ids.remove(&handler.trade_engine_id);
                                                 info!(
                                                     "Order cancelled ? Trade Engine Id -> {:?}",
@@ -503,20 +505,20 @@ impl ClientNode {
                                         }
                                     }
                                 });
-                            }
+                            // }
                         }
                         Signal::UpdateTradeStatus {
                             trade_engine_id,
                             status,
                         } => {
                             if let Some(engine) = self.trade_engines.get_mut(&trade_engine_id) {
-                                if engine.strategy == self.strategy_to_process {
+                                // if engine.strategy == self.strategy_to_process {
                                     engine.trade_status = status.clone();
                                     if status == TradeStatus::Closed {
                                         self.active_trade_ids.remove(&engine.trade_engine_id);
                                         self.handler_ids.insert(engine.trade_engine_id);
                                     }
-                                }
+                                // }
                             }
                         }
                         Signal::ForceSquareOff {
@@ -524,7 +526,7 @@ impl ClientNode {
                             strategy,
                             position_type,
                         } => {
-                            if strategy == self.strategy_to_process {
+                            // if strategy == self.strategy_to_process {
                                 let tx_order_processor = self.tx_order_processor.clone();
                                 let tx_broadcast = self.tx_broadcast.clone();
                                 let active_trade_ids = self.active_trade_ids.clone();
@@ -550,10 +552,11 @@ impl ClientNode {
                                             if let Some(_req) = &handler.exit_req {
                                                 // found = true;
 
-                                                tx_broadcast.send(Signal::UpdateTradeStatus {
-                                                    trade_engine_id: handler.trade_engine_id,
-                                                    status: TradeStatus::AwaitingConfirmation,
-                                                });
+                                                let _ =
+                                                    tx_broadcast.send(Signal::UpdateTradeStatus {
+                                                        trade_engine_id: handler.trade_engine_id,
+                                                        status: TradeStatus::AwaitingConfirmation,
+                                                    });
 
                                                 handler
                                                     .squareoff_trade(
@@ -565,7 +568,7 @@ impl ClientNode {
                                         }
                                     }
                                 });
-                            }
+                            // }
                         }
                         Signal::SquareOffReject {
                             trade_id: _,

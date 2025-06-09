@@ -363,10 +363,6 @@ fn create_channels() -> (
     tokio::sync::mpsc::Sender<Signal>,
     tokio::sync::mpsc::Receiver<Signal>,
     Arc<broadcast::Sender<Signal>>,
-    broadcast::Receiver<Signal>,
-    broadcast::Receiver<Signal>,
-    broadcast::Receiver<Signal>,
-    broadcast::Receiver<Signal>,
     tokio::sync::mpsc::Sender<Signal>,
     tokio::sync::mpsc::Receiver<Signal>,
 ) {
@@ -378,12 +374,6 @@ fn create_channels() -> (
     let (tx_order_processor, rx_order_processor) = tokio::sync::mpsc::channel::<Signal>(100);
 
     let tx_broadcast_arc = Arc::new(tx_broadcast);
-
-    let rx_strategy_1 = tx_broadcast_arc.subscribe();
-    let rx_strategy_2 = tx_broadcast_arc.subscribe();
-    let rx_strategy_3 = tx_broadcast_arc.subscribe();
-    let rx_strategy_4 = tx_broadcast_arc.subscribe();
-
     (
         tx_redis,
         rx_redis,
@@ -392,10 +382,6 @@ fn create_channels() -> (
         tx_main.clone(),
         rx_main,
         tx_broadcast_arc.clone(),
-        rx_strategy_1,
-        rx_strategy_2,
-        rx_strategy_3,
-        rx_strategy_4,
         tx_order_processor,
         rx_order_processor,
     )
@@ -497,6 +483,22 @@ async fn main() {
     let feed_token_clone = feed_token.clone();
     let auth_token_clone = auth_token.clone();
 
+    // let (
+    //     tx_redis,
+    //     mut rx_redis,
+    //     tx_aows,
+    //     mut rx_aows,
+    //     tx_main,
+    //     mut rx_main,
+    //     tx_broadcast_arc,
+    //     mut rx_strategy_1,
+    //     mut rx_strategy_2,
+    //     mut rx_strategy_3,
+    //     mut rx_strategy_4,
+    //     tx_order_processor,
+    //     mut rx_order_processor,
+    // ) = create_channels();
+
     let (
         tx_redis,
         mut rx_redis,
@@ -505,10 +507,6 @@ async fn main() {
         tx_main,
         mut rx_main,
         tx_broadcast_arc,
-        mut rx_strategy_1,
-        mut rx_strategy_2,
-        mut rx_strategy_3,
-        mut rx_strategy_4,
         tx_order_processor,
         mut rx_order_processor,
     ) = create_channels();
@@ -649,87 +647,6 @@ async fn main() {
         )
         .await;
         // sleep(Duration::from_secs(5));
-    });
-
-    // Spawn another task for startegy 2
-    let tx_main_2 = tx_main.clone();
-    let tx_redis_2 = tx_redis.clone();
-    let client_2 = client.clone();
-    let tx_aows_2 = tx_aows.clone();
-    let tx_op_clone_2 = tx_order_processor.clone();
-    let trade_handlers_2: HashMap<u32, TradeEngine> = HashMap::new();
-    let active_trade_ids_2 = HashSet::new();
-    let handler_ids_2: HashSet<u32> = HashSet::new();
-
-    let mut engine_processor_2 = EngineProcessor::new(
-        Strategy::RangeBreak,
-        tx_broadcast_arc.clone(),
-        tx_main_2,
-        tx_redis_2,
-        client_2,
-        tx_aows_2,
-        tx_op_clone_2,
-        trade_handlers_2,
-        active_trade_ids_2,
-        handler_ids_2,
-    );
-
-    tokio::spawn(async move {
-        engine_processor_2.process_engine(rx_strategy_2).await;
-    });
-
-    // Spawn another task for startegy 3
-    let tx_main_3 = tx_main.clone();
-    let tx_redis_3 = tx_redis.clone();
-    let client_3 = client.clone();
-    let tx_aows_3 = tx_aows.clone();
-    let tx_op_clone_3 = tx_order_processor.clone();
-    let trade_handlers_3: HashMap<u32, TradeEngine> = HashMap::new();
-    let active_trade_ids_3 = HashSet::new();
-    let handler_ids_3: HashSet<u32> = HashSet::new();
-
-    let mut engine_processor_3 = EngineProcessor::new(
-        Strategy::MomentumShift,
-        tx_broadcast_arc.clone(),
-        tx_main_3,
-        tx_redis_3,
-        client_3,
-        tx_aows_3,
-        tx_op_clone_3,
-        trade_handlers_3,
-        active_trade_ids_3,
-        handler_ids_3,
-    );
-
-    tokio::spawn(async move {
-        engine_processor_3.process_engine(rx_strategy_3).await;
-    });
-
-    // Spawn another task for startegy 4
-    let tx_main_4 = tx_main.clone();
-    let tx_redis_4 = tx_redis.clone();
-    let client_4 = client.clone();
-    let tx_aows_4 = tx_aows.clone();
-    let tx_op_clone_4 = tx_order_processor.clone();
-    let trade_handlers_4: HashMap<u32, TradeEngine> = HashMap::new();
-    let active_trade_ids_4 = HashSet::new();
-    let handler_ids_4: HashSet<u32> = HashSet::new();
-
-    let mut engine_processor_4 = EngineProcessor::new(
-        Strategy::DynamicChannel,
-        tx_broadcast_arc.clone(),
-        tx_main_4,
-        tx_redis_4,
-        client_4,
-        tx_aows_4,
-        tx_op_clone_4,
-        trade_handlers_4,
-        active_trade_ids_4,
-        handler_ids_4,
-    );
-
-    tokio::spawn(async move {
-        engine_processor_4.process_engine(rx_strategy_4).await;
     });
 
     let tx_main_order = tx_main.clone();
