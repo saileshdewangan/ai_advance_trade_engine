@@ -50,6 +50,10 @@ pub use firebase_utils::FirebaseTrade;
 pub mod trade_engine_processor;
 // pub use trade_engine_processor::process_engine;
 
+
+/// Trade Engine Processor
+pub mod advanced_trade_engine_processor;
+
 /// Redis stream producer
 pub mod redis_stream_producer;
 

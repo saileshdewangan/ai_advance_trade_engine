@@ -440,6 +440,9 @@ async fn main() {
     let redis_password = dotenv::var("REDIS_PASSWORD").unwrap();
     let redis_conn_url = dotenv::var("REDIS_URL").unwrap();
 
+    /// Creating a HashMap of Shared TradeEngine.
+    /// Which value can only be chaned by main channel
+
     let redis_conn_url_clone = redis_conn_url.clone();
 
     // let redUt = RedisUtils::init(redis_conn_url, rx_redis, tx_main_clone).await;
