@@ -552,7 +552,7 @@ async fn main() {
         let mut client_nodes: HashMap<u32, ClientNode> = HashMap::new();
         //     let mut trade_handlers: Vec<TradeEngine> = Vec::new();
         while let Some(msg) = rx_main.recv().await {
-            println!("\nReceived by main : {:?}", msg);
+            // println!("\nReceived by main : {:?}", msg);
             let msg_clone = msg.clone();
             match msg_clone {
                 Signal::NewTradeEngine(new_engine) => {
