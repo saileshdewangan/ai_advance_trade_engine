@@ -480,6 +480,13 @@ pub enum Signal {
     /// Update margin
     #[serde(rename = "update_margin")]
     UpdateMargin { client_id: u32, margin: f32 },
+
+    /// Update margin
+    #[serde(rename = "update_square_off_shared")]
+    SquaredOffShared {
+        client_id: u32,
+        trade_engine_id: u32,
+    },
 }
 
 /// NewMessage is struct to format websocket messages
@@ -509,7 +516,7 @@ impl RedisUtils {
         // let tx_clone = tx_broadcast.clone();
 
         let client = redis::Client::open(redis_url.as_str()).expect("Invalid connection URL");
-      
+
         let _redis_url_clone = redis_url.clone();
 
         let mut con = client.get_multiplexed_async_connection().await.unwrap();
@@ -537,217 +544,6 @@ impl RedisUtils {
                         match serde_json::from_str::<NewMessage>(&message) {
                             Ok(msg) => {
                                 tx_clone.send(msg.signal).await.unwrap();
-                                // Handle each signal
-                                // match msg.signal {
-                                //     Signal::Ping => {
-                                //         // println!("Ping received");
-                                //     }
-                                //     Signal::Auth { token } => {
-                                //         println!("Auth data : {:?}", token);
-                                //     }
-                                //     Signal::AuthSuccess(data) => {
-                                //         println!("{:?}", data);
-                                //     }
-                                //     Signal::AuthFaild(data) => {
-                                //         println!("{:?}", data);
-                                //     }
-                                //     Signal::NewTradeEngine(trade_engine) => {
-                                //         // println!("\n\n Engine  {:?} : ", trade_engine);
-
-                                //         tx_clone
-                                //             .send(Signal::NewTradeEngine(trade_engine))
-                                //             .unwrap();
-                                //     }
-                                //     Signal::InitializeOpenTrade {
-                                //         new_trade,
-                                //         trade_res,
-                                //     } => {
-                                //         tx_clone
-                                //             .send(Signal::InitializeOpenTrade {
-                                //                 new_trade,
-                                //                 trade_res,
-                                //             })
-                                //             .unwrap();
-                                //     }
-                                //     Signal::AddTradeEngine {
-                                //         trade_engine_id,
-                                //         client_id,
-                                //         config,
-                                //     } => {
-                                //         println!("\n\n Engine  {:?} : ", trade_engine_id);
-
-                                //         let mut trade_engine = TradeEngine::default();
-                                //         trade_engine.client_id = client_id;
-                                //         trade_engine.strategy = config.strategy;
-                                //         trade_engine.symbol = config.symbol;
-                                //         trade_engine.max_price = config.max_price;
-                                //         trade_engine.max_trades = config.max_trades;
-                                //         trade_engine.max_loss = config.max_loss;
-                                //         trade_engine.sl = config.sl;
-                                //         trade_engine.trailing_sl = config.trailing_sl;
-                                //         trade_engine.quantity = config.quantity;
-                                //         trade_engine.target = config.target;
-                                //         trade_engine.transaction_type = config.transaction_type;
-                                //         trade_engine.segment = SubscriptionExchange::NSEFO;
-
-                                //         tx_clone
-                                //             .send(Signal::NewTradeEngine(trade_engine))
-                                //             .unwrap();
-                                //     }
-                                //     Signal::OpenNewTrade(engine) => {
-                                //         tx_clone.send(Signal::OpenNewTrade(engine)).unwrap();
-                                //     }
-                                //     Signal::OrderPlaced(resp) => {
-                                //         println!("Order placed redis {:?}", resp);
-                                //         tx_clone.send(Signal::OrderPlaced(resp)).unwrap();
-                                //     }
-                                //     Signal::AddClient {
-                                //         api_key,
-                                //         jwt_token,
-                                //         client_id,
-                                //     } => {
-                                //         tx_clone
-                                //             .send(Signal::AddClient {
-                                //                 api_key,
-                                //                 jwt_token,
-                                //                 client_id,
-                                //             })
-                                //             .unwrap();
-                                //     }
-                                //     Signal::UpdateTradeEngine {
-                                //         trade_engine_id,
-                                //         client_id,
-                                //         config,
-                                //     } => {
-                                //         println!("\n\n Engine Update  {:?} : ", config);
-                                //         tx_clone
-                                //             .send(Signal::UpdateTradeEngine {
-                                //                 trade_engine_id,
-                                //                 client_id,
-                                //                 config,
-                                //             })
-                                //             .unwrap();
-                                //     }
-                                //     Signal::RemoveTradeEngine(trade_engine_id) => {
-                                //         tx_clone
-                                //             .send(Signal::RemoveTradeEngine(trade_engine_id))
-                                //             .unwrap();
-                                //     }
-                                //     Signal::TradeEngineExist { client_id, status } => {
-                                //         tx_clone
-                                //             .send(Signal::TradeEngineExist { client_id, status })
-                                //             .unwrap();
-                                //     }
-                                //     Signal::TradeEngineDetails {
-                                //         client_id,
-                                //         strategy,
-                                //         symbol,
-                                //     } => {
-                                //         tx_clone
-                                //             .send(Signal::TradeEngineDetails {
-                                //                 client_id,
-                                //                 strategy,
-                                //                 symbol,
-                                //             })
-                                //             .unwrap();
-                                //     }
-                                //     Signal::Disconnect(data) =>
-                                //     // Retrieve the trade_engine_id from msg.data
-                                //     {
-                                //         let client_id = data;
-                                //         println!("Closing connection for client_id: {}", client_id);
-
-                                //         // Send the signal with trade_engine_id to stop the trade engine
-                                //         // if let Err(e) =
-                                //         tx_clone.send(Signal::Disconnect(client_id)).unwrap();
-                                //         // {
-                                //         //     eprintln!("Failed to send Disconnect signal: {:?}", e);
-                                //         // }
-                                //     }
-                                //     Signal::CancelOrder {
-                                //         symbol,
-                                //         strategy,
-                                //         transaction_type,
-                                //         trigger_price,
-                                //     } => {
-                                //         if let Err(e) = tx_clone.send(Signal::CancelOrder {
-                                //             symbol,
-                                //             strategy,
-                                //             transaction_type,
-                                //             trigger_price,
-                                //         }) {
-                                //             eprintln!(
-                                //                 "Failed to send cancel order signal: {:?}",
-                                //                 e
-                                //             );
-                                //         }
-                                //     }
-                                //     Signal::ClosePosition(tradeid) => {
-                                //         tx_clone.send(Signal::ClosePosition(tradeid)).unwrap();
-                                //     }
-                                //     Signal::ForceSquareOff {
-                                //         symbol,
-                                //         strategy,
-                                //         position_type,
-                                //     } => {
-                                //         println!(
-                                //             "\nSYMBOL {:?}, STRATEGY {:?}, TRANS TYPE {:?}",
-                                //             symbol, strategy, position_type
-                                //         );
-                                //         tx_clone
-                                //             .send(Signal::ForceSquareOff {
-                                //                 symbol,
-                                //                 strategy,
-                                //                 position_type,
-                                //             })
-                                //             .unwrap();
-                                //     }
-                                //     // Signal::SquareOffTradeReq {
-                                //     //     client_id,
-                                //     //     trade_id,
-                                //     //     remove_trade_engine,
-                                //     // } => {
-                                //     //     // Send the signal with clientid and tradeid to square off trade req
-                                //     //     if let Err(e) = tx_clone.send(Signal::SquareOffTradeReq {
-                                //     //         instance_id,
-                                //     //         client_id,
-                                //     //         trade_id,
-                                //     //         remove_trade_engine,
-                                //     //     }) {
-                                //     //         eprintln!(
-                                //     //             "Failed to send SquareOffConfirm signal: {:?}",
-                                //     //             e
-                                //     //         );
-                                //     //     }
-                                //     // }
-                                //     Signal::OrderRejected(trade_status) => {
-                                //         tx_clone.send(Signal::OrderRejected(trade_status)).unwrap();
-                                //     }
-                                //     Signal::OrderError(trade_status) => {
-                                //         tx_clone.send(Signal::OrderError(trade_status)).unwrap();
-                                //     }
-                                //     Signal::TestStream {
-                                //         trade_engine_id,
-                                //         client_id,
-                                //         symbol,
-                                //     } => {
-                                //         tx_clone
-                                //             .send(Signal::TestStream {
-                                //                 trade_engine_id,
-                                //                 client_id,
-                                //                 symbol,
-                                //             })
-                                //             .unwrap();
-                                //     }
-                                //     // serde_json::from_value(msg.data)
-                                //     //     .unwrap();
-                                //     Signal::StrategyMatched => {
-                                //         println!("Strategy matched.");
-                                //     }
-                                //     _ => {
-                                //         println!("Other signal received....");
-                                //     }
-                                // }
                             }
                             Err(e) => {
                                 eprintln!("Failed to deserialize message: {}", e);

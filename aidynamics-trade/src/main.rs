@@ -550,56 +550,24 @@ async fn main() {
         tx_order_processor: Sender<Signal>,
     ) {
         let mut client_nodes: HashMap<u32, ClientNode> = HashMap::new();
-        //     let mut trade_handlers: Vec<TradeEngine> = Vec::new();
+        let mut client_nodes_set: HashSet<u32> = HashSet::new();
         while let Some(msg) = rx_main.recv().await {
-            // println!("\nReceived by main : {:?}", msg);
+            println!("\nReceived by main : {:?}", msg);
             let msg_clone = msg.clone();
+
             match msg_clone {
                 Signal::NewTradeEngine(new_engine) => {
                     let engine = new_engine.clone();
                     let client_id = engine.client_id;
                     let trade_engine_id = engine.trade_engine_id;
-
-                    if let Some(client_node) = client_nodes.get_mut(&client_id) {
-                        // If the client exists, check if it already has the TradeEngine
-                        if !client_node.trade_engines.contains_key(&trade_engine_id) {
-                            client_node
-                                .trade_engines
-                                .insert(trade_engine_id, engine.clone());
-
-                            client_node.active_trade_ids.insert(trade_engine_id);
-                            client_node.handler_ids.remove(&trade_engine_id);
-                        }
-                    } else {
-                        // If the client doesn't exist, create a new ClientNode
-                        let mut trade_engines = HashMap::new();
-                        trade_engines.insert(trade_engine_id, engine.clone());
-                        let new_node = ClientNode {
-                            client_id,
-                            trade_engines,
-                            rx_broadcast: tx_broadcast_clone.subscribe(),
-                            tx_broadcast: tx_broadcast_clone.clone(),
-                            tx_main: tx_main.clone(),
-                            tx_redis: tx_redis.clone(),
-                            tx_angelone_sender: tx_aows.clone(),
-                            tx_order_processor: tx_order_processor.clone(),
-                            active_trade_ids: {
-                                let mut set = HashSet::new();
-                                set.insert(trade_engine_id);
-                                set
-                            },
-                            handler_ids: HashSet::new(),
-                            strategy_to_process: engine.strategy.clone(),
-                        };
-
-                        client_nodes.insert(client_id, new_node);
+                    if !client_nodes_set.contains(&client_id) {
+                        client_nodes_set.insert(client_id);
 
                         let mut new_trade_engines = HashMap::new();
                         new_trade_engines.insert(trade_engine_id, engine.clone());
                         let mut new_client_node = ClientNode {
                             client_id,
                             trade_engines: new_trade_engines,
-                            rx_broadcast: tx_broadcast_clone.subscribe(),
                             tx_broadcast: tx_broadcast_clone.clone(),
                             tx_main: tx_main.clone(),
                             tx_redis: tx_redis.clone(),
@@ -614,11 +582,101 @@ async fn main() {
                             strategy_to_process: engine.strategy.clone(),
                         };
 
+                        let mut rx_brd_recv = tx_broadcast_clone.subscribe();
                         tokio::spawn(async move {
-                            new_client_node.process_engine().await;
+                            new_client_node.process_engine(rx_brd_recv).await;
                         });
                     }
                     tx_broadcast_clone.send(msg);
+
+                    // let engine = new_engine.clone();
+                    // let client_id = engine.client_id;
+                    // let trade_engine_id = engine.trade_engine_id;
+                    // if let Some(client_node) = client_nodes.get_mut(&client_id) {
+                    //     // If the client exists, check if it already has the TradeEngine
+                    //     if !client_node.trade_engines.contains_key(&trade_engine_id) {
+                    //         client_node
+                    //             .trade_engines
+                    //             .insert(trade_engine_id, engine.clone());
+
+                    //         client_node.active_trade_ids.insert(trade_engine_id);
+                    //         client_node.handler_ids.remove(&trade_engine_id);
+                    //     }
+                    // } else {
+                    //     // If the client doesn't exist, create a new ClientNode
+                    //     let mut trade_engines = HashMap::new();
+                    //     trade_engines.insert(trade_engine_id, engine.clone());
+                    //     let new_node = ClientNode {
+                    //         client_id,
+                    //         trade_engines,
+                    //         tx_broadcast: tx_broadcast_clone.clone(),
+                    //         tx_main: tx_main.clone(),
+                    //         tx_redis: tx_redis.clone(),
+                    //         tx_angelone_sender: tx_aows.clone(),
+                    //         tx_order_processor: tx_order_processor.clone(),
+                    //         active_trade_ids: {
+                    //             let mut set = HashSet::new();
+                    //             set.insert(trade_engine_id);
+                    //             set
+                    //         },
+                    //         handler_ids: HashSet::new(),
+                    //         strategy_to_process: engine.strategy.clone(),
+                    //     };
+
+                    //     client_nodes.insert(client_id, new_node);
+
+                    //     let mut new_trade_engines = HashMap::new();
+                    //     new_trade_engines.insert(trade_engine_id, engine.clone());
+                    //     let mut new_client_node = ClientNode {
+                    //         client_id,
+                    //         trade_engines: new_trade_engines,
+                    //         tx_broadcast: tx_broadcast_clone.clone(),
+                    //         tx_main: tx_main.clone(),
+                    //         tx_redis: tx_redis.clone(),
+                    //         tx_angelone_sender: tx_aows.clone(),
+                    //         tx_order_processor: tx_order_processor.clone(),
+                    //         active_trade_ids: {
+                    //             let mut set = HashSet::new();
+                    //             set.insert(trade_engine_id);
+                    //             set
+                    //         },
+                    //         handler_ids: HashSet::new(),
+                    //         strategy_to_process: engine.strategy.clone(),
+                    //     };
+
+                    //     let mut rx_brd_recv = tx_broadcast_clone.subscribe();
+                    //     tokio::spawn(async move {
+                    //         new_client_node.process_engine(rx_brd_recv).await;
+                    //     });
+                    // }
+                }
+                Signal::UpdateMargin { client_id, margin } => {
+                    if client_id != 0 {
+                        if let Some(node) = client_nodes.get_mut(&client_id) {
+                            for (_, engine) in node.trade_engines.iter_mut() {
+                                if engine.client_id == client_id {
+                                    engine.margin = margin;
+                                }
+                            }
+                        }
+                    }
+                    tx_broadcast_clone.send(msg);
+                }
+                Signal::SquaredOffShared {
+                    client_id,
+                    trade_engine_id,
+                } => {
+                    if client_id != 0 {
+                        if let Some(node) = client_nodes.get_mut(&client_id) {
+                            if let Some(handler) = node.trade_engines.get_mut(&trade_engine_id) {
+                                if handler.trade_status == TradeStatus::AwaitingConfirmation
+                                    || handler.trade_status == TradeStatus::Triggered
+                                {
+                                    handler.reset().await;
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // Forward all other messages to the broadcast channel
