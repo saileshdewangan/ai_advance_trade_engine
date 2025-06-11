@@ -71,7 +71,7 @@ pub struct ClientNode {
     pub trade_engines: HashMap<u32, TradeEngine>,
 
     /// Sender for broadcasting signals to multiple receivers.
-    pub tx_broadcast: Arc<tokio::sync::broadcast::Sender<Signal>>,
+    // pub tx_broadcast: Arc<tokio::sync::broadcast::Sender<Signal>>,
 
     /// Sender for sending signals to the main application thread.
     pub tx_main: Sender<Signal>,
@@ -83,7 +83,7 @@ pub struct ClientNode {
     pub tx_angelone_sender: Sender<Signal>,
 
     /// Sender for sending signals to the order processing component.
-    pub tx_order_processor: Sender<Signal>,
+    pub tx_order_processor: Arc<Sender<Signal>>,
 
     /// Contains only handler trade_engine_id which status is not Closed
     pub active_trade_ids: HashSet<u32>,
@@ -106,10 +106,10 @@ impl ClientNode {
     pub fn new(
         client_id: u32,
         trade_engines: HashMap<u32, TradeEngine>,
-        tx_broadcast: Arc<tokio::sync::broadcast::Sender<Signal>>,
+        // tx_broadcast: Arc<tokio::sync::broadcast::Sender<Signal>>,
         tx_main: Sender<Signal>,
         tx_redis: Sender<Signal>,
-        tx_order_processor: Sender<Signal>,
+        tx_order_processor: Arc<Sender<Signal>>,
         active_trade_ids: HashSet<u32>,
         strategy_to_process: Strategy,
         handler_ids: HashSet<u32>,
@@ -118,7 +118,7 @@ impl ClientNode {
         Self {
             client_id,
             trade_engines,
-            tx_broadcast,
+            // tx_broadcast,
             tx_main,
             tx_redis,
             active_trade_ids,
@@ -133,14 +133,18 @@ impl ClientNode {
     /// Signals are received here excluding PriceFeed
     pub async fn process_engine(
         &mut self,
-        mut rx_broadcast: tokio::sync::broadcast::Receiver<Signal>,
+        // mut rx_message: tokio::sync::broadcast::Receiver<Signal>,
+        mut rx_message: tokio::sync::mpsc::Receiver<Signal>,
     ) {
+        let tx_main_cln = Arc::new(self.tx_main.clone()); // Wrap in Arc once outside the loop
         loop {
-            // while let message = self.rx_broadcast.recv().await {
+            let tx_main_clone = tx_main_cln.clone();
+            // while let message = self.rx_message.recv().await {
             // Process the message
-            let message = rx_broadcast.recv().await;
+            let message = rx_message.recv().await;
             match message {
-                Ok(msg) => {
+                // Ok(msg) => {
+                Some(msg) => {
                     // println!("Broadcast = {:?}", msg);
                     match msg {
                         Signal::PriceFeed { token, ltp } => {
@@ -314,7 +318,8 @@ impl ClientNode {
                             let strategy_to_process_clone = self.strategy_to_process.clone();
                             let tx_angelone_sender_clone = self.tx_angelone_sender.clone();
                             let mut trade_handlers_clone = self.trade_engines.clone(); // Clone trade_handlers
-                            let tx_broadcast = self.tx_broadcast.clone();
+                                                                                       // let tx_broadcast = self.tx_broadcast.clone();
+                            let tx_main_new = tx_main_clone.clone();
 
                             tokio::spawn(async move {
                                 for (_, existing_engine) in trade_handlers_clone.iter_mut() {
@@ -329,9 +334,11 @@ impl ClientNode {
                                         // Update active_trade_ids (need a way to communicate back if needed)
                                         // active_trade_ids_clone.insert(*id); // Cannot modify outside the spawned task
 
-                                        let _ = tx_broadcast.send(Signal::UpdateActiveTrades(
-                                            existing_engine.clone(),
-                                        ));
+                                        let _ = tx_main_new
+                                            .send(Signal::UpdateActiveTrades(
+                                                existing_engine.clone(),
+                                            ))
+                                            .await;
 
                                         let subscription = SubscriptionBuilder::new("abcde12345")
                                             .mode(SubscriptionMode::Ltp)
@@ -458,9 +465,10 @@ impl ClientNode {
                         } => {
                             if strategy == self.strategy_to_process {
                                 let mut trade_handlers_clone = self.trade_engines.clone(); // Clone trade_handlers
-                                let tx_broadcast = self.tx_broadcast.clone();
-                                let active_trade_ids = self.active_trade_ids.clone();
+                                                                                           // let tx_broadcast = self.tx_broadcast.clone();
 
+                                let tx_main_new_clone_2 = tx_main_clone.clone();
+                                let active_trade_ids = self.active_trade_ids.clone();
                                 tokio::spawn(async move {
                                     for id in active_trade_ids {
                                         if let Some(handler) = trade_handlers_clone.get_mut(&id) {
@@ -482,10 +490,11 @@ impl ClientNode {
                                                 handler.trigger_price = 0.0;
                                                 handler.trading_symbol = String::from("");
                                                 let _ = handler.stop_loss_price - 0.0;
-                                                let _ = tx_broadcast.send(
-                                                    Signal::UpdateActiveTrades(handler.clone()),
-                                                );
-                                                // self.active_trade_ids.remove(&handler.trade_engine_id);
+                                                let _ = tx_main_new_clone_2
+                                                    .send(Signal::UpdateActiveTrades(
+                                                        handler.clone(),
+                                                    ))
+                                                    .await;
                                                 info!(
                                                     "Order cancelled ? Trade Engine Id -> {:?}",
                                                     handler.trade_engine_id
@@ -517,7 +526,7 @@ impl ClientNode {
                         } => {
                             if strategy == self.strategy_to_process {
                                 let tx_order_processor = self.tx_order_processor.clone();
-                                let tx_broadcast = self.tx_broadcast.clone();
+                                // let tx_broadcast = self.tx_broadcast.clone();
                                 let active_trade_ids = self.active_trade_ids.clone();
 
                                 let mut trade_handlers_map: HashMap<u32, TradeEngine> =
@@ -540,12 +549,13 @@ impl ClientNode {
                                             info!("\nForce {:?}", handler);
                                             if let Some(_req) = &handler.exit_req {
                                                 // found = true;
-
-                                                let _ =
-                                                    tx_broadcast.send(Signal::UpdateTradeStatus {
+                                                let tx_main_new = tx_main_clone.clone();
+                                                let _ = tx_main_new
+                                                    .send(Signal::UpdateTradeStatus {
                                                         trade_engine_id: handler.trade_engine_id,
                                                         status: TradeStatus::AwaitingConfirmation,
-                                                    });
+                                                    })
+                                                    .await;
 
                                                 handler
                                                     .squareoff_trade(
@@ -748,8 +758,9 @@ impl ClientNode {
                                         && handler.trade_id == trade_id
                                     // && handler.strategy == self.strategy_to_process
                                     {
-                                        self.tx_broadcast
+                                        tx_main_clone
                                             .send(Signal::DeleteActiveTradeIds(*t_eng_id))
+                                            .await
                                             .unwrap();
                                         handler.reset().await;
                                     }
@@ -764,7 +775,7 @@ impl ClientNode {
                             let mut trade_handlers_clone = self.trade_engines.clone();
                             let tx_order_processor = self.tx_order_processor.clone();
                             let active_trade_ids = self.active_trade_ids.clone();
-                            let tx_broadcast = self.tx_broadcast.clone();
+                            // let tx_broadcast = self.tx_broadcast.clone();
                             let handler_ids = self.handler_ids.clone();
                             tokio::spawn(async move {
                                 for id in active_trade_ids {
@@ -787,10 +798,11 @@ impl ClientNode {
                                 for id in handler_ids {
                                     if let Some(handler) = trade_handlers_clone.get_mut(&id) {
                                         if handler.client_id == client_id && client_id != 0 {
-                                            tx_broadcast
+                                            tx_main_clone
                                                 .send(Signal::RemoveTradeEngine(
                                                     handler.trade_engine_id,
                                                 ))
+                                                .await
                                                 .unwrap();
                                         }
                                     }
@@ -838,9 +850,11 @@ impl ClientNode {
                         _ => {}
                     }
                 }
-                Err(e) => {
-                    println!("Error {:?}", e);
-                }
+                None => {
+                    println!("No message");
+                } // Err(e) => {
+                  //     println!("Error {:?}", e);
+                  // }
             }
         }
     }

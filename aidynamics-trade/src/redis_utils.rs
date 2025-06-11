@@ -3,6 +3,7 @@
 use futures::StreamExt;
 use redis::AsyncCommands;
 use std::sync::Arc;
+// use std::sync::Arc;
 use std::time::Duration;
 // use serde_json::Value;
 // use tokio::sync::watch::error;
@@ -510,7 +511,7 @@ impl RedisUtils {
         redis_url: String,
         mut rx: mpsc::Receiver<Signal>,
         tx: mpsc::Sender<Signal>,
-        _tx_broadcast: Arc<tokio::sync::broadcast::Sender<Signal>>,
+        _tx_broadcast: Arc<tokio::sync::mpsc::Sender<Signal>>,
     ) {
         let tx_clone = tx.clone();
         // let tx_clone = tx_broadcast.clone();

@@ -375,7 +375,7 @@ impl AngelOneWebSocketClient {
         ws_url: String,
         mut rx: mpsc::Receiver<Signal>,
         // tx: mpsc::Sender<Signal>,
-        tx: Arc<tokio::sync::broadcast::Sender<Signal>>, // on_message:impl Fn(Ltp)
+        tx: Arc<tokio::sync::mpsc::Sender<Signal>>, // on_message:impl Fn(Ltp)
     ) {
         let tx_clone = tx.clone();
         // Spawn the WebSocket client task
@@ -409,12 +409,12 @@ impl AngelOneWebSocketClient {
                                     //     .await
                                     //     .unwrap();
 
-                                    tx_clone
+                                    let _ = tx_clone
                                         .send(Signal::PriceFeed {
                                             token: ltp_data.token,
                                             ltp: ltp_data.ltp,
                                         })
-                                        .unwrap();
+                                        .await;
                                 }
                                 Message::Text(text) => {
                                     println!("ANGELONE RECEIVED : {:?}", text);

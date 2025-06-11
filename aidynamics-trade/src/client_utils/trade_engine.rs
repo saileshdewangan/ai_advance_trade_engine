@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use chrono::{Duration, Utc};
 // use aidynamics_trade_utils::Error;
 // use tokio::sync::Mutex;
@@ -486,7 +488,7 @@ impl TradeEngine {
     //     }
     // }
 
-    pub async fn execute_trade(&mut self, tx_order_processor: mpsc::Sender<Signal>) {
+    pub async fn execute_trade(&mut self, tx_order_processor: Arc<mpsc::Sender<Signal>>) {
         println!("Trade executed ...");
         if let Some(req) = self.entry_req.clone() {
             self.trade_status = TradeStatus::Confirming;
@@ -588,7 +590,7 @@ impl TradeEngine {
     /// square off trade function to place new order with params
     pub async fn squareoff_trade(
         &mut self,
-        tx_order_processor: mpsc::Sender<Signal>,
+        tx_order_processor: Arc<mpsc::Sender<Signal>>,
         remove_trade_engine: bool,
     ) {
         // if remove_trade_engine == false {

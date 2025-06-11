@@ -44,7 +44,7 @@ pub mod order_processor {
     pub async fn process_order(
         receiver: &mut mpsc::Receiver<Signal>,
         tx_main: Sender<Signal>,
-        tx_broadcast: Arc<tokio::sync::broadcast::Sender<Signal>>,
+        tx_broadcast: Arc<tokio::sync::mpsc::Sender<Signal>>,
         tx_redis: Sender<Signal>,
     ) {
         let tx_main_clone = tx_main.clone();
@@ -260,7 +260,7 @@ pub mod order_processor {
         client_arc_clone: Arc<SmartConnect>,
         order_req: PlaceOrderReq,
         _tx_clone: Sender<Signal>,
-        tx_brd: Arc<tokio::sync::broadcast::Sender<Signal>>,
+        tx_brd: Arc<tokio::sync::mpsc::Sender<Signal>>,
         trade_engine_id: u32,
         strategy: Strategy,
         tx_redis: Sender<Signal>,
@@ -345,6 +345,7 @@ pub mod order_processor {
                         price: 0.0,
                         strategy: strategy.clone(),
                     }))
+                    .await
                     .unwrap();
             } else if ind_status.order.status == "error" || ind_status.order.order_status == "error"
             {
@@ -355,6 +356,7 @@ pub mod order_processor {
                         price: 0.0,
                         strategy: strategy.clone(),
                     }))
+                    .await
                     .unwrap();
             }
 
@@ -384,7 +386,7 @@ pub mod order_processor {
         client_arc_clone: Arc<SmartConnect>,
         order_req: PlaceOrderReq,
         _tx_clone: Sender<Signal>,
-        tx_brd: Arc<tokio::sync::broadcast::Sender<Signal>>,
+        tx_brd: Arc<tokio::sync::mpsc::Sender<Signal>>,
         trade_engine_id: u32,
         trade_id: u32,
         strategy: Strategy,
@@ -454,31 +456,31 @@ pub mod order_processor {
             if order_clone.order.status == "rejected"
                 || order_clone.order.order_status == "rejected"
             {
-                tx_brd
+                let _ = tx_brd
                     .send(Signal::OrderRejected(TradeRes {
                         trade_engine_id,
                         trade_id: 0,
                         price: 0.0,
                         strategy: strategy.clone(),
                     }))
-                    .unwrap();
+                    .await;
             } else if order_clone.order.status == "error"
                 || order_clone.order.order_status == "error"
             {
-                tx_brd
+                let _ = tx_brd
                     .send(Signal::OrderError(TradeRes {
                         trade_engine_id,
                         trade_id: 0,
                         price: 0.0,
                         strategy: strategy.clone(),
                     }))
-                    .unwrap();
+                    .await;
             }
 
             if remove_trade_engine {
-                tx_brd
+                let _ = tx_brd
                     .send(Signal::RemoveTradeEngine(trade_engine_id))
-                    .unwrap();
+                    .await;
             }
         }
         // -------------------------------------------------
