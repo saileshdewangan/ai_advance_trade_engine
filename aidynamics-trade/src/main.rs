@@ -355,7 +355,9 @@ fn connect() -> redis::Connection {
         .expect("failed to connect to Redis")
 }
 
-type ClientChannels = Arc<tokio::sync::RwLock<HashMap<u32, mpsc::Sender<Signal>>>>;
+// type ClientChannels = Arc<tokio::sync::RwLock<HashMap<u32, mpsc::Sender<Signal>>>>;
+type ClientChannels = HashMap<u32, mpsc::Sender<Signal>>;
+
 fn create_channels() -> (
     mpsc::Sender<Signal>,
     mpsc::Receiver<Signal>,
@@ -375,7 +377,8 @@ fn create_channels() -> (
     let (tx_main, rx_main) = tokio::sync::mpsc::channel::<Signal>(100);
     // let (tx_broadcast, _) = broadcast::channel::<Signal>(100);
     let (tx_order_processor, rx_order_processor) = tokio::sync::mpsc::channel::<Signal>(100);
-    let client_channels: ClientChannels = Arc::new(tokio::sync::RwLock::new(HashMap::new()));
+    // let client_channels: ClientChannels = Arc::new(tokio::sync::RwLock::new(HashMap::new()));
+    let client_channels: ClientChannels = HashMap::new();
 
     let tx_order_processor_arc = Arc::new(tx_order_processor);
     (
@@ -549,7 +552,8 @@ async fn main() {
     async fn receive_messages(
         rx_main: &mut Receiver<Signal>,
         // tx_broadcast_clone: Arc<tokio::sync::broadcast::Sender<Signal>>,
-        client_channels: Arc<tokio::sync::RwLock<HashMap<u32, Sender<Signal>>>>,
+        // client_channels: Arc<tokio::sync::RwLock<HashMap<u32, Sender<Signal>>>>,
+        mut client_channels: HashMap<u32, Sender<Signal>>,
         tx_aows: Sender<Signal>,
         tx_main: Sender<Signal>,
         tx_redis: Sender<Signal>,
@@ -558,7 +562,7 @@ async fn main() {
         let mut client_nodes: HashMap<u32, ClientNode> = HashMap::new();
         let mut client_nodes_set: HashSet<u32> = HashSet::new();
         while let Some(msg) = rx_main.recv().await {
-            println!("\nReceived by main : {:?}", msg);
+            // println!("\nReceived by main : {:?}", msg);
             let msg_clone = msg.clone();
 
             match msg_clone {
@@ -584,10 +588,11 @@ async fn main() {
                     if !client_nodes_set.contains(&client_id) {
                         client_nodes_set.insert(client_id);
 
-                        let mut map = client_channels.write().await;
+                        // let mut map = client_channels.write().await;
                         let (tx, rx) = mpsc::channel(100);
 
-                        map.insert(engine.client_id, tx.clone());
+                        client_channels.insert(engine.client_id, tx.clone());
+
                         let mut new_trade_engines = HashMap::new();
 
                         new_trade_engines.insert(trade_engine_id, engine.clone());
@@ -598,7 +603,7 @@ async fn main() {
                             tx_main: tx_main.clone(),
                             tx_redis: tx_redis.clone(),
                             tx_angelone_sender: tx_aows.clone(),
-                            tx_order_processor: tx_order_processor.clone(),
+                            // tx_order_processor: tx_order_processor.clone(),
                             active_trade_ids: {
                                 let mut set = HashSet::new();
                                 set.insert(trade_engine_id);
@@ -606,49 +611,69 @@ async fn main() {
                             },
                             handler_ids: HashSet::new(),
                             strategy_to_process: engine.strategy.clone(),
+                            angelone_client:None
                         };
 
                         tokio::spawn(async move {
                             new_client_node.process_engine(rx).await;
                         });
 
-                        let map = client_channels.read().await;
-                        // for (_client_id, tx) in map.iter() {
-                        for (_, tx) in map.iter() {
-                            let new_msg = msg.clone();
-                            tx.send(new_msg).await;
-                        }
+                        // for (_, tx) in client_channels.iter() {
+                        //     let new_msg = msg.clone();
+                        //     let _ = tx.send(new_msg).await;
+                        // }
+                    }
+                    // let map = client_channels.read().await;
+                    // for (_client_id, tx) in map.iter() {
+                    for (_, tx) in client_channels.iter() {
+                        let new_msg = msg.clone();
+                        let _ = tx.send(new_msg).await;
                     }
                 }
                 Signal::Disconnect(client_id) => {
                     if client_id != 0 {
                         client_nodes_set.remove(&client_id);
                     }
-                    let map = client_channels.read().await;
+                    // let map = client_channels.read().await;
                     // for (_client_id, tx) in map.iter() {
-                    for (_, tx) in map.iter() {
+                    for (_, tx) in client_channels.iter() {
                         let new_msg = msg_clone.clone();
-                        tx.send(new_msg).await;
+                        let _ = tx.send(new_msg).await;
                     }
                 }
                 // Forward all other messages to the broadcast channel
                 _ => {
-                    let map = client_channels.read().await;
+                    // let map = client_channels.read().await;
                     // for (_client_id, tx) in map.iter() {
-                    for (_, tx) in map.iter() {
+                    println!("\n Forwarding messages : {:?}\n", msg_clone);
+                    for (_, tx) in client_channels.iter() {
                         let new_msg = msg_clone.clone();
-                        tx.send(new_msg).await;
+                        let _ = tx.send(new_msg).await;
                     }
                 }
             }
         }
     };
 
+    let tx_main_order = tx_main.clone();
+    let tx_redis_order = tx_redis.clone();
+    let tx_connect_main = Arc::new(tx_main_order.clone());
+
+    // tokio::spawn(async move {
+    //     process_order(
+    //         &mut rx_order_processor,
+    //         tx_main_order,
+    //         // tx_broadcast_main,
+    //         tx_redis_order,
+    //     )
+    //     .await;
+    // });
+
     // Spawn another task to receive message
     let tx_main_cln = tx_main.clone();
     let tx_redis_clone = tx_redis.clone();
     // let tx_order_processor_arc_clone = tx_order_processor_arc.clone();
-    let client_channel_clone = client_channel.clone();
+    let mut client_channel_clone = client_channel.clone();
     let tx_op_main = tx_order_processor_arc.clone();
     let tx_aows_main = tx_aows.clone();
     let tx_redis_main = tx_redis.clone();
@@ -665,21 +690,6 @@ async fn main() {
         // sleep(Duration::from_secs(5));
     });
 
-    let tx_main_order = tx_main.clone();
-
-    let tx_redis_order = tx_redis.clone();
-    let tx_broadcast_main = tx_order_processor_arc.clone();
-
-    tokio::spawn(async move {
-        process_order(
-            &mut rx_order_processor,
-            tx_main_order,
-            tx_order_processor_arc.clone(),
-            tx_redis_order,
-        )
-        .await;
-    });
-
     let feedToken = feed_token_clone.clone();
     let clientCode = client_code.clone();
     let apiKey = api_key.clone();
@@ -688,7 +698,7 @@ async fn main() {
         "{}clientCode={}&feedToken={}&apiKey={}",
         "wss://smartapisocket.angelone.in/smart-stream?", clientCode, feedToken, apiKey
     );
-    let aows = AngelOneWebSocketClient::connect(wsUrl, rx_aows, tx_broadcast_main).await;
+    let aows = AngelOneWebSocketClient::connect(wsUrl, rx_aows, tx_connect_main.clone()).await;
 
     let tx_aows_clone = tx_aows.clone();
 
@@ -702,7 +712,7 @@ async fn main() {
         .subscribe(SubscriptionExchange::BSECM, vec!["19000".into()])
         .build();
 
-    tx_aows_clone
+    let _ = tx_aows_clone
         .send(Signal::Subscribe(subscription))
         .await
         .unwrap();

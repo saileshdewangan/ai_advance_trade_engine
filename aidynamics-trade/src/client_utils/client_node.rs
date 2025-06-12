@@ -1,3 +1,4 @@
+use crate::order_processor::order_processor::OrderProcessor;
 use crate::redis_utils::Signal;
 use crate::trade_engine::TradeEngine;
 use crate::trade_engine::{Strategy, TradeStatus};
@@ -9,8 +10,11 @@ use crate::websocket::angel_one_websocket::{
 use chrono::Utc;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
+
 use tokio::sync::mpsc::Sender;
 use tracing::{error, info};
+
+use crate::SmartConnect;
 
 /// Get indices instrument name by token
 pub fn get_instrument(token: &str) -> Instrument {
@@ -83,7 +87,7 @@ pub struct ClientNode {
     pub tx_angelone_sender: Sender<Signal>,
 
     /// Sender for sending signals to the order processing component.
-    pub tx_order_processor: Arc<Sender<Signal>>,
+    // pub tx_order_processor: Arc<Sender<Signal>>,
 
     /// Contains only handler trade_engine_id which status is not Closed
     pub active_trade_ids: HashSet<u32>,
@@ -93,6 +97,9 @@ pub struct ClientNode {
 
     /// Contains only handler trade_engine_id which status is Closed
     pub handler_ids: HashSet<u32>,
+
+    /// Angelone Client to place orders
+    pub angelone_client: Option<Arc<SmartConnect>>,
 }
 
 impl ClientNode {
@@ -109,7 +116,7 @@ impl ClientNode {
         // tx_broadcast: Arc<tokio::sync::broadcast::Sender<Signal>>,
         tx_main: Sender<Signal>,
         tx_redis: Sender<Signal>,
-        tx_order_processor: Arc<Sender<Signal>>,
+        // tx_order_processor: Arc<Sender<Signal>>,
         active_trade_ids: HashSet<u32>,
         strategy_to_process: Strategy,
         handler_ids: HashSet<u32>,
@@ -122,10 +129,11 @@ impl ClientNode {
             tx_main,
             tx_redis,
             active_trade_ids,
-            tx_order_processor,
+            // tx_order_processor,
             strategy_to_process,
             handler_ids,
             tx_angelone_sender,
+            angelone_client: None,
         }
     }
 
@@ -178,8 +186,7 @@ impl ClientNode {
                                                             if ltp > handler.trigger_price {
                                                                 handler
                                                                     .execute_trade(
-                                                                        self.tx_order_processor
-                                                                            .clone(),
+                                                                        Arc::new(self.tx_main.clone()),
                                                                     )
                                                                     .await;
                                                             }
@@ -192,8 +199,7 @@ impl ClientNode {
                                                             {
                                                                 handler
                                                                     .execute_trade(
-                                                                        self.tx_order_processor
-                                                                            .clone(),
+                                                                        Arc::new(self.tx_main.clone()),
                                                                     )
                                                                     .await;
                                                             }
@@ -228,7 +234,7 @@ impl ClientNode {
 
                                                             handler
                                                                 .squareoff_trade(
-                                                                    self.tx_order_processor.clone(),
+                                                                    Arc::new(self.tx_main.clone()),
                                                                     false,
                                                                 )
                                                                 .await;
@@ -249,7 +255,7 @@ impl ClientNode {
                                                                 TradeStatus::Triggered;
                                                             handler
                                                                 .squareoff_trade(
-                                                                    self.tx_order_processor.clone(),
+                                                                    Arc::new(self.tx_main.clone()),
                                                                     false,
                                                                 )
                                                                 .await;
@@ -525,7 +531,7 @@ impl ClientNode {
                             position_type,
                         } => {
                             if strategy == self.strategy_to_process {
-                                let tx_order_processor = self.tx_order_processor.clone();
+                                let tx_order_main = self.tx_main.clone();
                                 // let tx_broadcast = self.tx_broadcast.clone();
                                 let active_trade_ids = self.active_trade_ids.clone();
 
@@ -558,10 +564,7 @@ impl ClientNode {
                                                     .await;
 
                                                 handler
-                                                    .squareoff_trade(
-                                                        tx_order_processor.clone(),
-                                                        false,
-                                                    )
+                                                    .squareoff_trade(Arc::new(tx_order_main.clone()), false)
                                                     .await;
                                             }
                                         }
@@ -669,24 +672,122 @@ impl ClientNode {
                             }
                             // }
                         }
+                        // Signal::AddClient {
+                        //     api_key,
+                        //     jwt_token,
+                        //     client_id,
+                        // } => {
+                        //     // Here add a new client to place order to self.tx_order_processor
+                        //     println!("\nRECEIVED ADD CLEINT \n");
+                        //     self.tx_order_processor
+                        //         .send(Signal::AddClient {
+                        //             api_key,
+                        //             jwt_token,
+                        //             client_id,
+                        //         })
+                        //         .await
+                        //         .unwrap();
+                        // }
                         Signal::AddClient {
                             api_key,
                             jwt_token,
+                            client_id: _,
+                        } => {
+                            if self.angelone_client.is_none() {
+                                let new_client =
+                                    SmartConnect::new_with_jwt(api_key, Some(&jwt_token))
+                                        .await
+                                        .unwrap();
+                                self.angelone_client = Some(Arc::new(new_client));
+                            }
+                            // Create a new client
+                            // let new_client = SmartConnect::new_with_jwt(api_key, Some(&jwt_token))
+                            //     .await
+                            //     .unwrap();
+                            // clients_arc.insert(client_id.clone(), Arc::new(new_client));
+                            // // println!("\nNew client added for client id: {:?}", client_id);
+                            // info!("New client added for client id => {:?}", client_id);
+                        }
+                        Signal::ExecuteOrder {
+                            order_req,
+                            strategy,
+                            trade_engine_id,
                             client_id,
                         } => {
-                            // Here add a new client to place order to self.tx_order_processor
-                            self.tx_order_processor
-                                .send(Signal::AddClient {
-                                    api_key,
-                                    jwt_token,
-                                    client_id,
-                                })
-                                .await
-                                .unwrap();
+                            let order_clone = order_req.clone();
+                            // let tx_brd = tx_broadcast.clone();
+                            let tx_main_clone = tx_main_clone.clone();
+                            let strategy_clone = strategy.clone(); // Clone strategy outside of the task so it is not moved.
+                            let tx_redis_clone = self.tx_redis.clone();
+
+                            info!(
+                                "\n\nOrder clone {:?} client id {:?}",
+                                order_clone.clone(),
+                                client_id.clone()
+                            );
+
+                            if let Some(client_arc) = self.angelone_client.clone() {
+                                let client_arc_clone = client_arc.clone();
+
+                                tokio::spawn(async move {
+                                    OrderProcessor::handle_order_placement(
+                                        client_id,
+                                        client_arc_clone,
+                                        order_clone,
+                                        tx_main_clone,
+                                        trade_engine_id,
+                                        strategy_clone,
+                                        tx_redis_clone,
+                                    )
+                                    .await;
+                                });
+                            } else {
+                                // error!()
+                                eprintln!(
+                                    "Client executor not found for client id: {:?}",
+                                    client_id
+                                );
+                            }
+                        }
+                        Signal::SquareOffTrade {
+                            client_id,
+                            order_req,
+                            trade_id,
+                            trade_engine_id,
+                            remove_trade_engine,
+                            strategy,
+                        } => {
+                            let tx_redis_clone = self.tx_redis.clone();
+
+                            println!("Client id in Square off => {:?}", client_id);
+
+                            if let Some(client_arc) = self.angelone_client.clone() {
+                                let client_arc_clone = client_arc.clone();
+
+                                tokio::spawn(async move {
+                                    OrderProcessor::handle_squareoff_placement(
+                                        client_id,
+                                        client_arc_clone,
+                                        order_req,
+                                        tx_main_clone.clone(),
+                                        trade_engine_id,
+                                        trade_id,
+                                        strategy,
+                                        remove_trade_engine,
+                                        tx_redis_clone,
+                                    )
+                                    .await;
+                                });
+                            } else {
+                                eprintln!(
+                                    "Client not found for client id: {:?} Square Off",
+                                    client_id
+                                );
+                            }
                         }
                         Signal::RemoveClient { client_id } => {
                             // Here add a new client to place order to self.tx_order_processor
-                            self.tx_order_processor
+                            self.tx_main
                                 .send(Signal::RemoveClient { client_id })
                                 .await
                                 .unwrap();
@@ -738,7 +839,7 @@ impl ClientNode {
                                         handler.trade_status = TradeStatus::AwaitingConfirmation;
                                         handler
                                             .squareoff_trade(
-                                                self.tx_order_processor.clone(),
+                                                Arc::new(self.tx_main.clone()),
                                                 remove_trade_engine,
                                             )
                                             .await;
@@ -773,7 +874,7 @@ impl ClientNode {
                         }
                         Signal::Disconnect(client_id) => {
                             let mut trade_handlers_clone = self.trade_engines.clone();
-                            let tx_order_processor = self.tx_order_processor.clone();
+                            let tx_order_main = Arc::new(self.tx_main.clone());
                             let active_trade_ids = self.active_trade_ids.clone();
                             // let tx_broadcast = self.tx_broadcast.clone();
                             let handler_ids = self.handler_ids.clone();
@@ -785,10 +886,7 @@ impl ClientNode {
                                         {
                                             if let Some(_req) = &handler.exit_req {
                                                 handler
-                                                    .squareoff_trade(
-                                                        tx_order_processor.clone(),
-                                                        true,
-                                                    )
+                                                    .squareoff_trade(tx_order_main.clone(), true)
                                                     .await;
                                                 handler.disconnect().await;
                                             }
@@ -807,7 +905,7 @@ impl ClientNode {
                                         }
                                     }
                                 }
-                                tx_order_processor
+                                tx_order_main
                                     .send(Signal::RemoveClient { client_id })
                                     .await
                                     .unwrap();
