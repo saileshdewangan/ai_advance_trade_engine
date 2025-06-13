@@ -585,6 +585,21 @@ async fn main() {
                         let _ = tx.send(new_msg).await;
                     }
                 }
+                Signal::RequestSquareOff {
+                    client_id,
+                    trade_id,
+                    remove_trade_engine,
+                    trade_engine_id,
+                } => {
+                    if let Some(tx) = client_channels.get(&client_id) {
+                        let _ = tx.send(msg).await;
+                    } else {
+                        for (_, tx) in client_channels.iter() {
+                            let new_msg = msg.clone();
+                            let _ = tx.send(new_msg).await;
+                        }
+                    }
+                }
                 Signal::NewTradeEngine(new_engine) => {
                     let engine = new_engine.clone();
                     let client_id = engine.client_id;
