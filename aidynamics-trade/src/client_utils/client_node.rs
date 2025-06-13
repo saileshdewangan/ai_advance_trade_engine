@@ -185,9 +185,9 @@ impl ClientNode {
                                                             // self.handle_buy_signal(&mut handler, ltp).await
                                                             if ltp > handler.trigger_price {
                                                                 handler
-                                                                    .execute_trade(
-                                                                        Arc::new(self.tx_main.clone()),
-                                                                    )
+                                                                    .execute_trade(Arc::new(
+                                                                        self.tx_main.clone(),
+                                                                    ))
                                                                     .await;
                                                             }
                                                         }
@@ -198,9 +198,9 @@ impl ClientNode {
                                                                     == self.strategy_to_process
                                                             {
                                                                 handler
-                                                                    .execute_trade(
-                                                                        Arc::new(self.tx_main.clone()),
-                                                                    )
+                                                                    .execute_trade(Arc::new(
+                                                                        self.tx_main.clone(),
+                                                                    ))
                                                                     .await;
                                                             }
                                                         }
@@ -564,7 +564,10 @@ impl ClientNode {
                                                     .await;
 
                                                 handler
-                                                    .squareoff_trade(Arc::new(tx_order_main.clone()), false)
+                                                    .squareoff_trade(
+                                                        Arc::new(tx_order_main.clone()),
+                                                        false,
+                                                    )
                                                     .await;
                                             }
                                         }
@@ -672,22 +675,6 @@ impl ClientNode {
                             }
                             // }
                         }
-                        // Signal::AddClient {
-                        //     api_key,
-                        //     jwt_token,
-                        //     client_id,
-                        // } => {
-                        //     // Here add a new client to place order to self.tx_order_processor
-                        //     println!("\nRECEIVED ADD CLEINT \n");
-                        //     self.tx_order_processor
-                        //         .send(Signal::AddClient {
-                        //             api_key,
-                        //             jwt_token,
-                        //             client_id,
-                        //         })
-                        //         .await
-                        //         .unwrap();
-                        // }
                         Signal::AddClient {
                             api_key,
                             jwt_token,
@@ -700,13 +687,6 @@ impl ClientNode {
                                         .unwrap();
                                 self.angelone_client = Some(Arc::new(new_client));
                             }
-                            // Create a new client
-                            // let new_client = SmartConnect::new_with_jwt(api_key, Some(&jwt_token))
-                            //     .await
-                            //     .unwrap();
-                            // clients_arc.insert(client_id.clone(), Arc::new(new_client));
-                            // // println!("\nNew client added for client id: {:?}", client_id);
-                            // info!("New client added for client id => {:?}", client_id);
                         }
                         Signal::ExecuteOrder {
                             order_req,

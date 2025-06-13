@@ -1,7 +1,8 @@
 #![allow(warnings)]
-use aidynamics_trade::order_processor::order_processor::process_order;
+// use aidynamics_trade::order_processor::order_processor::process_order;
 use aidynamics_trade_utils::http::HttpClient;
 use std::collections::{HashMap, HashSet};
+use std::hash::Hash;
 use std::ops::Sub;
 use std::time::Instant;
 use std::{clone, string, thread, vec};
@@ -490,22 +491,6 @@ async fn main() {
     let feed_token_clone = feed_token.clone();
     let auth_token_clone = auth_token.clone();
 
-    // let (
-    //     tx_redis,
-    //     mut rx_redis,
-    //     tx_aows,
-    //     mut rx_aows,
-    //     tx_main,
-    //     mut rx_main,
-    //     tx_order_processor_arc,
-    //     mut rx_strategy_1,
-    //     mut rx_strategy_2,
-    //     mut rx_strategy_3,
-    //     mut rx_strategy_4,
-    //     tx_order_processor,
-    //     mut rx_order_processor,
-    // ) = create_channels();
-
     let (
         tx_redis,
         mut rx_redis,
@@ -566,21 +551,40 @@ async fn main() {
             let msg_clone = msg.clone();
 
             match msg_clone {
-                // Signal::PriceFeed { token, ltp } => {
-                //     let map = client_channels.read().await;
-                //     // for (_client_id, tx) in map.iter() {
-                //     for (_, tx) in map.iter() {
+                Signal::AddClient {
+                    api_key,
+                    jwt_token,
+                    client_id,
+                } => {
+                    if !client_nodes_set.contains(&client_id) {
+                        client_nodes_set.insert(client_id);
 
-                //         let new_token = token.clone();
-                //         let _ = tx
-                //             .send(Signal::PriceFeed {
-                //                 token: new_token,
-                //                 ltp,
-                //             })
-                //             .await;
-                //         // Fan-out to all clients
-                //     }
-                // }
+                        // let mut map = client_channels.write().await;
+                        let (tx, rx) = mpsc::channel(100);
+
+                        client_channels.insert(client_id, tx.clone());
+
+                        let mut new_client_node = ClientNode {
+                            client_id,
+                            trade_engines: HashMap::new(),
+                            tx_main: tx_main.clone(),
+                            tx_redis: tx_redis.clone(),
+                            tx_angelone_sender: tx_aows.clone(),
+                            active_trade_ids: HashSet::new(),
+                            handler_ids: HashSet::new(),
+                            strategy_to_process: Strategy::Momentum,
+                            angelone_client: None,
+                        };
+
+                        tokio::spawn(async move {
+                            new_client_node.process_engine(rx).await;
+                        });
+                    }
+                    for (_, tx) in client_channels.iter() {
+                        let new_msg = msg.clone();
+                        let _ = tx.send(new_msg).await;
+                    }
+                }
                 Signal::NewTradeEngine(new_engine) => {
                     let engine = new_engine.clone();
                     let client_id = engine.client_id;
@@ -611,17 +615,12 @@ async fn main() {
                             },
                             handler_ids: HashSet::new(),
                             strategy_to_process: engine.strategy.clone(),
-                            angelone_client:None
+                            angelone_client: None,
                         };
 
                         tokio::spawn(async move {
                             new_client_node.process_engine(rx).await;
                         });
-
-                        // for (_, tx) in client_channels.iter() {
-                        //     let new_msg = msg.clone();
-                        //     let _ = tx.send(new_msg).await;
-                        // }
                     }
                     // let map = client_channels.read().await;
                     // for (_client_id, tx) in map.iter() {
@@ -645,7 +644,7 @@ async fn main() {
                 _ => {
                     // let map = client_channels.read().await;
                     // for (_client_id, tx) in map.iter() {
-                    println!("\n Forwarding messages : {:?}\n", msg_clone);
+                    // println!("\n Forwarding messages : {:?}\n", msg_clone);
                     for (_, tx) in client_channels.iter() {
                         let new_msg = msg_clone.clone();
                         let _ = tx.send(new_msg).await;
