@@ -1,7 +1,7 @@
 use crate::order_processor::order_processor::OrderProcessor;
 use crate::redis_utils::Signal;
 use crate::trade_engine::TradeEngine;
-use crate::trade_engine::{Strategy, TradeStatus};
+use crate::trade_engine::TradeStatus;
 use crate::types::ExchangeType;
 use crate::types::TransactionType;
 use crate::websocket::angel_one_websocket::{
@@ -55,16 +55,6 @@ impl ToString for Instrument {
     }
 }
 
-impl Instrument {
-    /// Determines if the instrument is an index
-    fn is_index(&self) -> bool {
-        matches!(
-            self,
-            Instrument::NIFTY | Instrument::BANKNIFTY | Instrument::FINNIFTY | Instrument::SENSEX
-        )
-    }
-}
-
 /// Represents a single client's container that manages multiple TradeEngines.
 #[derive(Debug, Clone)]
 pub struct ClientNode {
@@ -93,7 +83,7 @@ pub struct ClientNode {
     pub active_trade_ids: HashSet<u32>,
 
     /// The strategy that this processor is responsible for.
-    pub strategy_to_process: Strategy,
+    // pub strategy_to_process: Strategy,
 
     /// Contains only handler trade_engine_id which status is Closed
     pub handler_ids: HashSet<u32>,
@@ -118,7 +108,7 @@ impl ClientNode {
         tx_redis: Sender<Signal>,
         // tx_order_processor: Arc<Sender<Signal>>,
         active_trade_ids: HashSet<u32>,
-        strategy_to_process: Strategy,
+        // strategy_to_process: Strategy,
         handler_ids: HashSet<u32>,
         tx_angelone_sender: Sender<Signal>,
     ) -> Self {
@@ -130,7 +120,7 @@ impl ClientNode {
             tx_redis,
             active_trade_ids,
             // tx_order_processor,
-            strategy_to_process,
+            // strategy_to_process,
             handler_ids,
             tx_angelone_sender,
             angelone_client: None,
@@ -164,20 +154,13 @@ impl ClientNode {
                                     if let Some(handler) =
                                         self.trade_engines.get_mut(&trade_engine_id)
                                     {
-                                        // self.check_trade_conditions(
-                                        //     handler,
-                                        //     ltp,
-                                        //     instrument.clone(),
-                                        //     token.clone()
-                                        // )
-                                        // .await;
                                         match instrument {
                                             Instrument::NIFTY
                                             | Instrument::BANKNIFTY
                                             | Instrument::FINNIFTY
                                             | Instrument::SENSEX => {
                                                 if handler.trade_status == TradeStatus::Pending
-                                                    && handler.strategy == self.strategy_to_process
+                                                    // && handler.strategy == self.strategy_to_process
                                                     && handler.symbol == instrument.to_string()
                                                 {
                                                     match handler.position_type {
@@ -194,8 +177,8 @@ impl ClientNode {
                                                         TransactionType::SELL => {
                                                             // self.handle_sell_signal(&mut handler, ltp).await
                                                             if ltp < handler.trigger_price
-                                                                && handler.strategy
-                                                                    == self.strategy_to_process
+                                                            // && handler.strategy
+                                                            //     == self.strategy_to_process
                                                             {
                                                                 handler
                                                                     .execute_trade(Arc::new(
@@ -277,7 +260,7 @@ impl ClientNode {
                             if let Some(existing_engine) =
                                 self.trade_engines.get_mut(&trade_res.trade_engine_id)
                             {
-                                if existing_engine.can_accept_new_trade(&self.strategy_to_process) {
+                                if existing_engine.can_accept_new_trade(&new_trade.strategy) {
                                     info!("new_trade_init = {:?} Res {:?}", new_trade, trade_res);
 
                                     existing_engine.update_from(&new_trade).await;
@@ -441,27 +424,26 @@ impl ClientNode {
                             // }
                         }
                         Signal::OrderError(resp) => {
-                            if resp.strategy == self.strategy_to_process {
-                                if let Some(handler) =
-                                    self.trade_engines.get_mut(&resp.trade_engine_id)
-                                {
-                                    if handler.trade_status == TradeStatus::Confirming {
-                                        // handler.trade_status = TradeStatus::Closed;
-                                        // handler.exchange_type = ExchangeType::NFO;
-                                        // handler.symbol_token = String::from("");
-                                        // handler.trigger_price = 0.0;
-                                        // handler.trading_symbol = String::from("");
-                                        // handler.stop_loss_price - 0.0;
+                            // if resp.strategy == self.strategy_to_process {
+                            if let Some(handler) = self.trade_engines.get_mut(&resp.trade_engine_id)
+                            {
+                                if handler.trade_status == TradeStatus::Confirming {
+                                    // handler.trade_status = TradeStatus::Closed;
+                                    // handler.exchange_type = ExchangeType::NFO;
+                                    // handler.symbol_token = String::from("");
+                                    // handler.trigger_price = 0.0;
+                                    // handler.trading_symbol = String::from("");
+                                    // handler.stop_loss_price - 0.0;
 
-                                        // println!(
-                                        //     "\nOpen order Rejected ? Trade Engine Id -> {:?}",
-                                        //     handler.trade_engine_id
-                                        // );
-                                        self.active_trade_ids.remove(&resp.trade_engine_id);
-                                        handler.reset().await;
-                                    }
+                                    // println!(
+                                    //     "\nOpen order Rejected ? Trade Engine Id -> {:?}",
+                                    //     handler.trade_engine_id
+                                    // );
+                                    self.active_trade_ids.remove(&resp.trade_engine_id);
+                                    handler.reset().await;
                                 }
                             }
+                            // }
                         }
                         Signal::CancelOrder {
                             symbol,
@@ -469,47 +451,44 @@ impl ClientNode {
                             transaction_type,
                             trigger_price,
                         } => {
-                            if strategy == self.strategy_to_process {
-                                let mut trade_handlers_clone = self.trade_engines.clone(); // Clone trade_handlers
-                                                                                           // let tx_broadcast = self.tx_broadcast.clone();
-
-                                let tx_main_new_clone_2 = tx_main_clone.clone();
-                                let active_trade_ids = self.active_trade_ids.clone();
-                                tokio::spawn(async move {
-                                    for id in active_trade_ids {
-                                        if let Some(handler) = trade_handlers_clone.get_mut(&id) {
-                                            if (handler.trade_status == TradeStatus::Pending
-                                                || handler.trade_status == TradeStatus::Confirming)
-                                                && handler.symbol == symbol
-                                                && handler.strategy == strategy
-                                                && handler.position_type == transaction_type
-                                                && handler.trigger_price == trigger_price
-                                            {
-                                                handler.trade_status = TradeStatus::Closed;
-                                                handler.exchange_type =
-                                                    if handler.exchange_type == ExchangeType::NFO {
-                                                        ExchangeType::NFO
-                                                    } else {
-                                                        ExchangeType::BFO
-                                                    };
-                                                handler.symbol_token = String::from("");
-                                                handler.trigger_price = 0.0;
-                                                handler.trading_symbol = String::from("");
-                                                let _ = handler.stop_loss_price - 0.0;
-                                                let _ = tx_main_new_clone_2
-                                                    .send(Signal::UpdateActiveTrades(
-                                                        handler.clone(),
-                                                    ))
-                                                    .await;
-                                                info!(
-                                                    "Order cancelled ? Trade Engine Id -> {:?}",
-                                                    handler.trade_engine_id
-                                                );
-                                            }
+                            // if strategy == self.strategy_to_process {
+                            let mut trade_handlers_clone = self.trade_engines.clone(); // Clone trade_handlers
+                                                                                       // let tx_broadcast = self.tx_broadcast.clone();
+                            let tx_main_new_clone_2 = tx_main_clone.clone();
+                            let active_trade_ids = self.active_trade_ids.clone();
+                            tokio::spawn(async move {
+                                for id in active_trade_ids {
+                                    if let Some(handler) = trade_handlers_clone.get_mut(&id) {
+                                        if (handler.trade_status == TradeStatus::Pending
+                                            || handler.trade_status == TradeStatus::Confirming)
+                                            && handler.symbol == symbol
+                                            && handler.strategy == strategy
+                                            && handler.position_type == transaction_type
+                                            && handler.trigger_price == trigger_price
+                                        {
+                                            handler.trade_status = TradeStatus::Closed;
+                                            handler.exchange_type =
+                                                if handler.exchange_type == ExchangeType::NFO {
+                                                    ExchangeType::NFO
+                                                } else {
+                                                    ExchangeType::BFO
+                                                };
+                                            handler.symbol_token = String::from("");
+                                            handler.trigger_price = 0.0;
+                                            handler.trading_symbol = String::from("");
+                                            let _ = handler.stop_loss_price - 0.0;
+                                            let _ = tx_main_new_clone_2
+                                                .send(Signal::UpdateActiveTrades(handler.clone()))
+                                                .await;
+                                            info!(
+                                                "Order cancelled ? Trade Engine Id -> {:?}",
+                                                handler.trade_engine_id
+                                            );
                                         }
                                     }
-                                });
-                            }
+                                }
+                            });
+                            // }
                         }
                         Signal::UpdateTradeStatus {
                             trade_engine_id,
@@ -530,50 +509,49 @@ impl ClientNode {
                             strategy,
                             position_type,
                         } => {
-                            if strategy == self.strategy_to_process {
-                                let tx_order_main = self.tx_main.clone();
-                                // let tx_broadcast = self.tx_broadcast.clone();
-                                let active_trade_ids = self.active_trade_ids.clone();
+                            // if strategy == self.strategy_to_process {
+                            let tx_order_main = self.tx_main.clone();
+                            // let tx_broadcast = self.tx_broadcast.clone();
+                            let active_trade_ids = self.active_trade_ids.clone();
 
-                                let mut trade_handlers_map: HashMap<u32, TradeEngine> =
-                                    HashMap::new();
-                                for id in active_trade_ids {
-                                    if let Some(handler) = self.trade_engines.get(&id) {
-                                        trade_handlers_map.insert(id, handler.clone());
-                                    }
+                            let mut trade_handlers_map: HashMap<u32, TradeEngine> = HashMap::new();
+                            for id in active_trade_ids {
+                                if let Some(handler) = self.trade_engines.get(&id) {
+                                    trade_handlers_map.insert(id, handler.clone());
                                 }
+                            }
 
-                                info!("\nActive handlers : {:?}", self.active_trade_ids.len());
+                            info!("\nActive handlers : {:?}", self.active_trade_ids.len());
 
-                                tokio::spawn(async move {
-                                    for (_, handler) in trade_handlers_map.iter_mut() {
-                                        if handler.trade_status == TradeStatus::Open
-                                            && handler.symbol == symbol
-                                            && handler.strategy == strategy
-                                            && handler.position_type == position_type
-                                        {
-                                            info!("\nForce {:?}", handler);
-                                            if let Some(_req) = &handler.exit_req {
-                                                // found = true;
-                                                let tx_main_new = tx_main_clone.clone();
-                                                let _ = tx_main_new
-                                                    .send(Signal::UpdateTradeStatus {
-                                                        trade_engine_id: handler.trade_engine_id,
-                                                        status: TradeStatus::AwaitingConfirmation,
-                                                    })
-                                                    .await;
+                            tokio::spawn(async move {
+                                for (_, handler) in trade_handlers_map.iter_mut() {
+                                    if handler.trade_status == TradeStatus::Open
+                                        && handler.symbol == symbol
+                                        && handler.strategy == strategy
+                                        && handler.position_type == position_type
+                                    {
+                                        info!("\nForce {:?}", handler);
+                                        if let Some(_req) = &handler.exit_req {
+                                            // found = true;
+                                            let tx_main_new = tx_main_clone.clone();
+                                            let _ = tx_main_new
+                                                .send(Signal::UpdateTradeStatus {
+                                                    trade_engine_id: handler.trade_engine_id,
+                                                    status: TradeStatus::AwaitingConfirmation,
+                                                })
+                                                .await;
 
-                                                handler
-                                                    .squareoff_trade(
-                                                        Arc::new(tx_order_main.clone()),
-                                                        false,
-                                                    )
-                                                    .await;
-                                            }
+                                            handler
+                                                .squareoff_trade(
+                                                    Arc::new(tx_order_main.clone()),
+                                                    false,
+                                                )
+                                                .await;
                                         }
                                     }
-                                });
-                            }
+                                }
+                            });
+                            // }
                         }
                         Signal::SquareOffReject {
                             trade_id: _,

@@ -13,8 +13,6 @@ use crate::{
     Result, SmartConnect,
 };
 
-const INDICES_TOKENS: [&'static str; 3] = ["26009", "26000", "26037"];
-
 /// Enum trade status
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum TradeStatus {

@@ -572,7 +572,7 @@ async fn main() {
                             tx_angelone_sender: tx_aows.clone(),
                             active_trade_ids: HashSet::new(),
                             handler_ids: HashSet::new(),
-                            strategy_to_process: Strategy::Momentum,
+                            // strategy_to_process: Strategy::Momentum,
                             angelone_client: None,
                         };
 
@@ -614,7 +614,7 @@ async fn main() {
                                 set
                             },
                             handler_ids: HashSet::new(),
-                            strategy_to_process: engine.strategy.clone(),
+                            // strategy_to_process: engine.strategy.clone(),
                             angelone_client: None,
                         };
 

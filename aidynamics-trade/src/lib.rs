@@ -56,7 +56,7 @@ pub use firebase_utils::FirebaseTrade;
 // pub mod advanced_trade_engine_processor;
 
 /// Redis stream producer
-pub mod redis_stream_producer;
+// pub mod redis_stream_producer;
 
 /// Order processor
 pub mod order_processor;

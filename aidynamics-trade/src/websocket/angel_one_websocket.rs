@@ -3,6 +3,7 @@ use byteorder::{ByteOrder, LittleEndian};
 use futures_util::{SinkExt, StreamExt};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use tokio::time::sleep;
+use std::fmt::Debug;
 // use serde_json::json;
 use std::str;
 use std::{sync::Arc, time::Instant};
