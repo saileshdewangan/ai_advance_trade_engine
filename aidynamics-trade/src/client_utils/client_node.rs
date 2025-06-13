@@ -318,10 +318,10 @@ impl ClientNode {
                             // }
                         }
                         Signal::OpenNewTrade(engine) => {
-                            println!("Strategy to process = {:?}", self.strategy_to_process);
+                            println!("Open new trade : Strategy = {:?}", engine.strategy);
                             // if engine.strategy == self.strategy_to_process {
                             let engine_clone = engine.clone();
-                            let strategy_to_process_clone = self.strategy_to_process.clone();
+                            // let strategy_to_process_clone = self.strategy_to_process.clone();
                             let tx_angelone_sender_clone = self.tx_angelone_sender.clone();
                             let mut trade_handlers_clone = self.trade_engines.clone(); // Clone trade_handlers
                                                                                        // let tx_broadcast = self.tx_broadcast.clone();
@@ -331,7 +331,7 @@ impl ClientNode {
                                 for (_, existing_engine) in trade_handlers_clone.iter_mut() {
                                     if existing_engine.symbol == engine_clone.symbol
                                         && existing_engine
-                                            .can_accept_new_trade(&strategy_to_process_clone)
+                                            .can_accept_new_trade(&engine_clone.strategy)
                                     {
                                         info!("trade_pushed {:?}", engine_clone);
 
@@ -767,10 +767,13 @@ impl ClientNode {
                         }
                         Signal::RemoveClient { client_id } => {
                             // Here add a new client to place order to self.tx_order_processor
-                            self.tx_main
-                                .send(Signal::RemoveClient { client_id })
-                                .await
-                                .unwrap();
+                            if self.client_id == client_id && self.angelone_client.is_some() {
+                                self.angelone_client = None;
+                                // self.tx_main
+                                //     .send(Signal::RemoveClient { client_id })
+                                //     .await
+                                //     .unwrap();
+                            }
                         }
                         Signal::RemoveTradeEngine(trade_engine_id) => {
                             // Find and remove the trade engine with the matching ID from the vector
@@ -778,6 +781,10 @@ impl ClientNode {
                             self.trade_engines.remove(&trade_engine_id);
                             self.active_trade_ids.remove(&trade_engine_id);
                             self.handler_ids.remove(&trade_engine_id);
+                            if self.trade_engines.is_empty() {
+                                // This will exit the loop and stop the tokio::spawn task
+                                return;
+                            }
                         }
                         Signal::UpdateTradeEngine {
                             trade_engine_id,

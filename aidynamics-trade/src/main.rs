@@ -633,8 +633,6 @@ async fn main() {
                     if client_id != 0 {
                         client_nodes_set.remove(&client_id);
                     }
-                    // let map = client_channels.read().await;
-                    // for (_client_id, tx) in map.iter() {
                     for (_, tx) in client_channels.iter() {
                         let new_msg = msg_clone.clone();
                         let _ = tx.send(new_msg).await;
