@@ -37,7 +37,7 @@ pub mod order_processor {
         redis_utils::Signal,
         server_utils::ServerHttp,
         trade_engine::TradeRes,
-        trade_handler::Payload,
+        // trade_handler::Payload,
         types::ExchangeType,
     };
 
