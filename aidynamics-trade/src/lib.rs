@@ -26,7 +26,7 @@ pub use api::{funds, gtt, market, order, portfolio, user, ws};
 pub mod types;
 
 mod client_utils;
-pub use client_utils::trade_handler;
+// pub use client_utils::trade_handler;
 pub use client_utils::trade_engine;
 pub use client_utils::client_node;
 
