@@ -284,9 +284,9 @@ pub struct TradeEngine {
     #[serde(default = "default_execution_time")]
     pub execution_time: i64,
 
-    /// Margin avilable to trade
+    /// Is margin available
     #[serde(default = "default_margin")]
-    pub margin: f32,
+    pub margin: bool,
 }
 
 /// Struct to hold information received from server to open new trade
@@ -382,8 +382,8 @@ fn default_execution_time() -> i64 {
     Utc::now().timestamp()
 }
 
-fn default_margin() -> f32 {
-    0.00
+fn default_margin() -> bool {
+    true
 }
 
 impl Default for TradeEngine {
@@ -417,7 +417,7 @@ impl Default for TradeEngine {
             transaction_type: TransactionType::BUY,
             position_type: TransactionType::BUY,
             execution_time: 0,
-            margin: 0.00,
+            margin: true,
         }
     }
 }
@@ -471,23 +471,6 @@ impl TradeEngine {
     }
 
     /// New trade function to place new order with params
-    // pub async fn execute_trade(&mut self, tx_redis: mpsc::Sender<Signal>) {
-    //     println!("Trade executed ...");
-    //     if let Some(req) = self.entry_req.clone() {
-    //         self.trade_status = TradeStatus::Confirming;
-    //         if let Err(err) = tx_redis
-    //             .send(Signal::ExecuteTrade {
-    //                 client_id: self.client_id,
-    //                 trade_engine_id: self.trade_engine_id,
-    //                 order_req: req,
-    //             })
-    //             .await
-    //         {
-    //             tracing::error!("Failed to send trade execution signal: {:?}", err);
-    //         }
-    //     }
-    // }
-
     pub async fn execute_trade(&mut self, tx_order_processor: Arc<mpsc::Sender<Signal>>) {
         println!("Trade executed ...");
         if let Some(req) = self.entry_req.clone() {
@@ -521,7 +504,7 @@ impl TradeEngine {
             self.executed_trades < self.max_trades
                 && self.trade_status == TradeStatus::Closed
                 && self.strategy == *strategy
-                && self.margin > 1000.0
+                && self.margin
         } else {
             self.executed_trades < self.max_trades
                 && self.trade_status == TradeStatus::Closed

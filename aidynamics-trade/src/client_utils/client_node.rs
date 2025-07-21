@@ -365,20 +365,20 @@ impl ClientNode {
                                 .insert(trade_engine.trade_engine_id, trade_engine);
                             // }
                         }
-                        Signal::UpdateMargin { client_id, margin } => {
+                        Signal::UpdateMargin { client_id, status } => {
                             if client_id != 0 {
                                 for id in self.active_trade_ids.clone() {
                                     if let Some(handler) = self.trade_engines.get_mut(&id) {
                                         if handler.client_id == client_id {
-                                            handler.margin = margin;
-                                            info!("Margin received {:?}", margin)
+                                            handler.margin = status;
+                                            info!("Margin received {:?}", status)
                                         }
                                     }
                                 }
                                 for id in self.handler_ids.clone() {
                                     if let Some(handler) = self.trade_engines.get_mut(&id) {
                                         if handler.client_id == client_id {
-                                            handler.margin = margin
+                                            handler.margin = status
                                         }
                                     }
                                 }

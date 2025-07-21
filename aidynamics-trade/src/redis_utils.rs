@@ -480,7 +480,7 @@ pub enum Signal {
 
     /// Update margin
     #[serde(rename = "update_margin")]
-    UpdateMargin { client_id: u32, margin: f32 },
+    UpdateMargin { client_id: u32, status: bool },
 
     /// Update margin
     #[serde(rename = "update_square_off_shared")]
