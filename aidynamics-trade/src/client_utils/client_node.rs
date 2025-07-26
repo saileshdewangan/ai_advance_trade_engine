@@ -207,6 +207,8 @@ impl ClientNode {
                                                             Ltp = ltp
                                                         );
 
+                                                        handler.trail_stop_loss(ltp);
+
                                                         if ltp <= handler.stop_loss_price
                                                             || ltp >= handler.target_price
                                                             || handler.exceeds_threshold()
@@ -228,7 +230,8 @@ impl ClientNode {
                                                             ?handler.transaction_type, pnl = (handler.trade_entry_price - ltp)
                                                             * handler.quantity as f32, target_price = handler.target_price,
                                                             sl_price = handler.stop_loss_price);
-
+                                                        handler.trail_stop_loss(ltp);
+                                                        
                                                         if ltp >= handler.stop_loss_price
                                                             || ltp <= handler.target_price
                                                             || handler.exceeds_threshold()
@@ -307,7 +310,6 @@ impl ClientNode {
                             // let strategy_to_process_clone = self.strategy_to_process.clone();
                             let tx_angelone_sender_clone = self.tx_angelone_sender.clone();
                             let mut trade_handlers_clone = self.trade_engines.clone(); // Clone trade_handlers
-                                                                                       // let tx_broadcast = self.tx_broadcast.clone();
                             let tx_main_new = tx_main_clone.clone();
 
                             tokio::spawn(async move {

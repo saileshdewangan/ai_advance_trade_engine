@@ -512,6 +512,19 @@ impl TradeEngine {
         }
     }
 
+    /// Trailing stop loss function by 5 points
+    pub fn trail_stop_loss(&mut self, current_price: f32) {
+        if self.transaction_type == TransactionType::BUY {
+            if current_price >= self.stop_loss_price + 5.0 {
+                self.stop_loss_price += 5.0;
+            }
+        } else if self.transaction_type == TransactionType::SELL {
+            if current_price <= self.stop_loss_price - 5.0 {
+                self.stop_loss_price -= 5.0;
+            }
+        }
+    }
+
     /// Update variants on new trade open
     pub async fn update_from(&mut self, other: &NewTrade) {
         self.exchange_type = other.exchange_type;
