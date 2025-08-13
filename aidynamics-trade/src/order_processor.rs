@@ -154,10 +154,10 @@ pub mod order_processor {
                 let order_clone = ind_status.clone();
 
                 let mut price: f32 = 0.00;
-                if order_clone.order.price != 0.00 {
-                    price = order_clone.order.price as f32;
-                } else {
+                if order_clone.order.average_price != 0.00 {
                     price = order_clone.order.average_price as f32;
+                } else {
+                    price = order_clone.order.price as f32;
                 }
 
                 let redis_data = Signal::UpdateExecutionData {
@@ -219,11 +219,7 @@ pub mod order_processor {
                 let order = ind_status.clone();
                 let order_clone = order.clone();
 
-                let price = if order.order.price == 0.00 {
-                    order.order.price
-                } else {
-                    order.order.average_price
-                };
+                let price = order.order.average_price;
 
                 tx_redis
                     .send(Signal::UpdateSquareOff {
@@ -241,7 +237,7 @@ pub mod order_processor {
                 info!("Waiting for 2 seconds.");
                 sleep(Duration::from_millis(2000));
 
-                info!("Individual status: {:?}", ind_status);
+                info!("\nIndividual status: {:?}", ind_status);
                 // let status = order_clone.order.status.clone();
                 // let order_status = order_clone.order.order_status.clone();
 
