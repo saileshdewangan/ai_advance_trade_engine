@@ -153,12 +153,12 @@ pub mod order_processor {
 
                 let order_clone = ind_status.clone();
 
-                let mut price: f32 = 0.00;
-                if order_clone.order.average_price != 0.00 {
-                    price = order_clone.order.average_price as f32;
-                } else {
-                    price = order_clone.order.price as f32;
-                }
+                let price: f32 = order_clone.order.average_price as f32;
+                // if order_clone.order.average_price != 0.00 {
+                //     price = order_clone.order.average_price as f32;
+                // } else {
+                //     price = order_clone.order.price as f32;
+                // }
 
                 let redis_data = Signal::UpdateExecutionData {
                     client_id,

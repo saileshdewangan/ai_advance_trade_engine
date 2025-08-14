@@ -231,7 +231,7 @@ impl ClientNode {
                                                             * handler.quantity as f32, target_price = handler.target_price,
                                                             sl_price = handler.stop_loss_price);
                                                         handler.trail_stop_loss(ltp);
-                                                        
+
                                                         if ltp >= handler.stop_loss_price
                                                             || ltp <= handler.target_price
                                                             || handler.exceeds_threshold()
@@ -763,7 +763,7 @@ impl ClientNode {
                             self.handler_ids.remove(&trade_engine_id);
                             if self.trade_engines.is_empty() {
                                 // This will exit the loop and stop the tokio::spawn task
-                                return;
+                                break;
                             }
                         }
                         Signal::UpdateTradeEngine {
