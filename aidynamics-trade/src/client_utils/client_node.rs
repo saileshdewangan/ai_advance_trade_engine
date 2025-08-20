@@ -198,16 +198,18 @@ impl ClientNode {
                                                     if handler.transaction_type
                                                         == TransactionType::BUY
                                                     {
-                                                        info!(
-                                                            ?handler.transaction_type,
-                                                            pnl = (ltp - handler.trade_entry_price)
-                                                                * handler.quantity as f32,
-                                                            Symbol = handler.trading_symbol,
-                                                            entry = handler.trade_entry_price,
-                                                            Ltp = ltp
-                                                        );
+                                                        // info!(
+                                                        //     ?handler.transaction_type,
+                                                        //     pnl = (ltp - handler.trade_entry_price)
+                                                        //         * handler.quantity as f32,
+                                                        //     Symbol = handler.trading_symbol,
+                                                        //     entry = handler.trade_entry_price,
+                                                        //     Ltp = ltp
+                                                        // );
 
                                                         handler.trail_stop_loss(ltp);
+
+                                                        info!("Entry Price {},SL price = {}, Target price = {}, LTP = {}",handler.trade_entry_price, handler.stop_loss_price, handler.target_price, ltp);
 
                                                         if ltp <= handler.stop_loss_price
                                                             || ltp >= handler.target_price
@@ -226,10 +228,13 @@ impl ClientNode {
                                                             info!("\n\nBuy square off trade");
                                                         }
                                                     } else {
-                                                        info!(
-                                                            ?handler.transaction_type, pnl = (handler.trade_entry_price - ltp)
-                                                            * handler.quantity as f32, target_price = handler.target_price,
-                                                            sl_price = handler.stop_loss_price);
+                                                        // info!(
+                                                        //     ?handler.transaction_type, pnl = (handler.trade_entry_price - ltp)
+                                                        //     * handler.quantity as f32, target_price = handler.target_price,
+                                                        //     sl_price = handler.stop_loss_price);
+                                                        // handler.trail_stop_loss(ltp);
+
+                                                        info!("Entry Price {},SL price = {}, Target price = {}, LTP = {}",handler.trade_entry_price, handler.stop_loss_price, handler.target_price, ltp);
                                                         handler.trail_stop_loss(ltp);
 
                                                         if ltp >= handler.stop_loss_price
@@ -372,7 +377,7 @@ impl ClientNode {
                                 for id in self.active_trade_ids.clone() {
                                     if let Some(handler) = self.trade_engines.get_mut(&id) {
                                         if handler.client_id == client_id {
-                                            handler.margin = status;
+                                            // handler.margin = status;
                                             info!("Margin received {:?}", status)
                                         }
                                     }

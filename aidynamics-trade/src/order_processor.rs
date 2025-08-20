@@ -55,7 +55,7 @@ pub mod order_processor {
             tx_redis: Sender<Signal>,
         ) {
             let order_clone = order_req.clone();
-            println!("Client id found ${:?}", client_id);
+            println!("Client id found {:?}", client_id);
             if client_id == 0 {
                 let ltp_data_req = LtpDataReq {
                     exchange: order_clone.inner.exchange,
@@ -63,6 +63,7 @@ pub mod order_processor {
                     symbol_token: order_clone.inner.symbol_token.clone(),
                 };
                 let ltp = client_arc_clone.ltp_data(&ltp_data_req).await.unwrap();
+                let ltp_price = ltp.ltp;
 
                 let quantity_result = usize::from_str(&order_clone.inner.quantity);
 
@@ -71,7 +72,7 @@ pub mod order_processor {
                     ProductType::IntraDay,
                     order_clone.transaction_type,
                     &order_clone.inner.symbol_token,
-                    ltp.ltp,
+                    ltp_price,
                     quantity_result.unwrap(),
                 );
 
@@ -86,7 +87,7 @@ pub mod order_processor {
                         client_id,
                         trade_engine_id,
                         order_req: order_req.clone(),
-                        price: ltp.ltp as f32,
+                        price: ltp_price as f32,
                         margin_required: margin_required as f32,
                     })
                     .await
@@ -100,11 +101,10 @@ pub mod order_processor {
             tracing::info!("Order res => {:?}", res);
 
             if let Some(is) = res.unique_order_id {
-                let ind_status = client_arc_clone.order_status(is).await.unwrap();
-
                 tracing::info!("Waiting for 2 seconds.");
 
                 sleep(Duration::from_millis(2000));
+                let ind_status = client_arc_clone.order_status(is).await.unwrap();
 
                 tracing::info!("Individual status: {:?}", ind_status);
 
@@ -113,7 +113,7 @@ pub mod order_processor {
                     ProductType::IntraDay,
                     ind_status.order.transaction_type,
                     &ind_status.order.symbol_token,
-                    ind_status.order.price,
+                    ind_status.order.average_price,
                     usize::from_str(ind_status.order.quantity.as_str()).unwrap(),
                 );
 
@@ -215,6 +215,8 @@ pub mod order_processor {
             let res = client_arc_clone.place_order(&order_req).await.unwrap();
 
             if let Some(order_id) = res.unique_order_id {
+                info!("Waiting for 2 seconds.");
+                sleep(Duration::from_millis(2000));
                 let ind_status = client_arc_clone.order_status(order_id).await.unwrap();
                 let order = ind_status.clone();
                 let order_clone = order.clone();
@@ -233,9 +235,6 @@ pub mod order_processor {
                     })
                     .await
                     .unwrap();
-
-                info!("Waiting for 2 seconds.");
-                sleep(Duration::from_millis(2000));
 
                 info!("\nIndividual status: {:?}", ind_status);
                 // let status = order_clone.order.status.clone();

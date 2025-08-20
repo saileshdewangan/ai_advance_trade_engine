@@ -1,19 +1,31 @@
-use futures_util::{StreamExt, SinkExt};
-use tokio_tungstenite::tungstenite::{Message, Error};
-use tokio::io::{AsyncBufReadExt, BufReader};
-use url::Url;
-use serde::{Serialize, Deserialize};
+use futures_util::{SinkExt, StreamExt};
+use serde::{Deserialize, Serialize};
 use std::io::stdin;
 use std::time::Duration;
+use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::time::sleep;
+use tokio_tungstenite::tungstenite::{Error, Message};
+use url::Url;
+use std::io;
 
 // Define the data structures for our messages
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(untagged)]
 enum Payload {
-    EventPayload { event: String, data: serde_json::Value },
-    MessagePayload { channel: Option<String>, sender_id: String, content: String, timestamp: String },
-    StatusPayload { event: String, data: String },
+    EventPayload {
+        event: String,
+        data: serde_json::Value,
+    },
+    MessagePayload {
+        channel: Option<String>,
+        sender_id: String,
+        content: String,
+        timestamp: String,
+    },
+    StatusPayload {
+        event: String,
+        data: String,
+    },
 }
 
 #[tokio::main]
@@ -21,9 +33,9 @@ async fn main() -> Result<(), Error> {
     // The main connection loop. This loop will run indefinitely.
     loop {
         // Attempt to connect to the WebSocket server
-        let url = Url::parse("ws://127.0.0.1:5001").expect("Invalid WebSocket URL");
+        let url = "ws://127.0.0.1:5001".to_string();
         println!("Attempting to connect to {}", url);
-        
+
         let connect_result = tokio_tungstenite::connect_async(url).await;
 
         match connect_result {
@@ -34,21 +46,31 @@ async fn main() -> Result<(), Error> {
                 // Create channels to communicate between tasks
                 let (tx, mut rx) = tokio::sync::mpsc::channel(32);
                 let ws_tx = tx.clone();
-            
+
                 // Spawn a task to handle incoming WebSocket messages
                 let ws_handle = tokio::spawn(async move {
                     while let Some(msg) = ws_stream.next().await {
                         match msg {
                             Ok(Message::Binary(buf)) => {
                                 let text = String::from_utf8_lossy(&buf);
-                                
+
                                 if text.starts_with(r#"{"event":"status""#) {
                                     if let Ok(status_msg) = serde_json::from_str::<Payload>(&text) {
                                         println!("[STATUS] {:?}", status_msg);
                                     }
-                                } else if let Ok(message_msg) = serde_json::from_str::<Payload>(&text) {
-                                    if let Payload::MessagePayload { channel, sender_id, content, .. } = message_msg {
-                                        let channel_prefix = channel.map(|c| format!("[{}] ", c)).unwrap_or_default();
+                                } else if let Ok(message_msg) =
+                                    serde_json::from_str::<Payload>(&text)
+                                {
+                                    if let Payload::MessagePayload {
+                                        channel,
+                                        sender_id,
+                                        content,
+                                        ..
+                                    } = message_msg
+                                    {
+                                        let channel_prefix = channel
+                                            .map(|c| format!("[{}] ", c))
+                                            .unwrap_or_default();
                                         println!("{}{} : {}", channel_prefix, sender_id, content);
                                     }
                                 } else {
@@ -70,11 +92,11 @@ async fn main() -> Result<(), Error> {
                         }
                     }
                 });
-            
+
                 // Main loop for user input
                 let mut reader = BufReader::new(stdin());
                 let mut line = String::new();
-            
+
                 loop {
                     tokio::select! {
                         // Read user input
@@ -85,7 +107,7 @@ async fn main() -> Result<(), Error> {
                                 println!("Closing connection due to end of input.");
                                 break;
                             }
-            
+
                             let input = line.trim();
                             let parts: Vec<&str> = input.splitn(2, ' ').collect();
                             if parts.len() < 2 {
@@ -93,10 +115,10 @@ async fn main() -> Result<(), Error> {
                                 line.clear();
                                 continue;
                             }
-            
+
                             let command = parts[0];
                             let data = parts[1];
-            
+
                             let payload_json = match command {
                                 "register" => {
                                     serde_json::json!({ "event": "register", "data": data })
@@ -135,7 +157,7 @@ async fn main() -> Result<(), Error> {
                                     continue;
                                 }
                             };
-            
+
                             // Send the payload to the WebSocket task
                             if let Err(e) = ws_tx.send(payload_json).await {
                                 eprintln!("Failed to send message to WebSocket task: {}", e);
@@ -153,7 +175,7 @@ async fn main() -> Result<(), Error> {
                         }
                     }
                 }
-                
+
                 // Wait for the WebSocket handler to finish before looping
                 if let Err(e) = ws_handle.await {
                     eprintln!("Error in WebSocket handler task: {}", e);

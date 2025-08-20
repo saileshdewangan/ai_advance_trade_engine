@@ -286,7 +286,7 @@ pub struct TradeEngine {
 
     /// Is margin available
     #[serde(default = "default_margin")]
-    pub margin: bool,
+    pub margin: i32,
 }
 
 /// Struct to hold information received from server to open new trade
@@ -382,8 +382,8 @@ fn default_execution_time() -> i64 {
     Utc::now().timestamp()
 }
 
-fn default_margin() -> bool {
-    true
+fn default_margin() -> i32 {
+    0
 }
 
 impl Default for TradeEngine {
@@ -417,7 +417,7 @@ impl Default for TradeEngine {
             transaction_type: TransactionType::BUY,
             position_type: TransactionType::BUY,
             execution_time: 0,
-            margin: true,
+            margin: 0,
         }
     }
 }
@@ -504,7 +504,6 @@ impl TradeEngine {
             self.executed_trades < self.max_trades
                 && self.trade_status == TradeStatus::Closed
                 && self.strategy == *strategy
-                && self.margin
         } else {
             self.executed_trades < self.max_trades
                 && self.trade_status == TradeStatus::Closed
@@ -520,7 +519,10 @@ impl TradeEngine {
             }
         } else if self.transaction_type == TransactionType::SELL {
             if current_price <= self.stop_loss_price - 5.0 {
-                self.stop_loss_price -= 5.0;
+                // self.stop_loss_price -= 5.0;
+                println!(
+                    "SELL Trailing stop loss updated to"
+                )
             }
         }
     }
