@@ -511,18 +511,50 @@ impl TradeEngine {
         }
     }
 
+    // pub fn trail_stop_loss(&mut self, current_price: f32) {
+    //     if self.transaction_type == TransactionType::BUY {
+    //         if current_price >= self.stop_loss_price + 5.0 {
+    //             self.stop_loss_price += 5.0;
+    //         }
+    //     } else if self.transaction_type == TransactionType::SELL {
+    //         if current_price <= self.stop_loss_price - 5.0 {
+    //             // self.stop_loss_price -= 5.0;
+    //             println!("SELL Trailing stop loss updated to")
+    //         }
+    //     }
+    // }
+
     /// Trailing stop loss function by 5 points
     pub fn trail_stop_loss(&mut self, current_price: f32) {
         if self.transaction_type == TransactionType::BUY {
-            if current_price >= self.stop_loss_price + 5.0 {
-                self.stop_loss_price += 5.0;
+            let diff = current_price - self.trade_entry_price;
+            let sl_gap = self.trade_entry_price - self.stop_loss_price;
+
+            if diff >= sl_gap {
+                // how many 5-point steps are crossed
+                let steps = ((diff - sl_gap) / 5.0).floor();
+                let new_stop = self.stop_loss_price + steps * 5.0;
+
+                if new_stop > self.stop_loss_price {
+                    self.stop_loss_price = new_stop;
+                    println!("BUY Trailing stop loss updated to {}", self.stop_loss_price);
+                }
             }
         } else if self.transaction_type == TransactionType::SELL {
-            if current_price <= self.stop_loss_price - 5.0 {
-                // self.stop_loss_price -= 5.0;
-                println!(
-                    "SELL Trailing stop loss updated to"
-                )
+            let diff = self.trade_entry_price - current_price;
+            let sl_gap = self.stop_loss_price - self.trade_entry_price;
+
+            if diff >= sl_gap {
+                let steps = ((diff - sl_gap) / 5.0).floor();
+                let new_stop = self.stop_loss_price - steps * 5.0;
+
+                if new_stop < self.stop_loss_price {
+                    self.stop_loss_price = new_stop;
+                    println!(
+                        "SELL Trailing stop loss updated to {}",
+                        self.stop_loss_price
+                    );
+                }
             }
         }
     }

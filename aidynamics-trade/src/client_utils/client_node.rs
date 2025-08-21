@@ -209,8 +209,7 @@ impl ClientNode {
 
                                                         handler.trail_stop_loss(ltp);
 
-                                                        info!("Entry Price {},SL price = {}, Target price = {}, LTP = {}",handler.trade_entry_price, handler.stop_loss_price, handler.target_price, ltp);
-
+                                             
                                                         if ltp <= handler.stop_loss_price
                                                             || ltp >= handler.target_price
                                                             || handler.exceeds_threshold()
