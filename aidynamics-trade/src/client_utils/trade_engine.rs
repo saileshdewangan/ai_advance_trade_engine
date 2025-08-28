@@ -32,6 +32,9 @@ pub enum TradeStatus {
     Confirming = 4,
     /// Variant showing waiting to for acknowledge
     AwaitingConfirmation = 5,
+    /// Variant to prevent multiple times execution of function
+    /// When backpressure is high
+    Executing = 6,
 }
 
 /// Enum engine status
@@ -130,7 +133,7 @@ impl TradeRes {
 /// over trade execution and risk management.
 pub struct TradeEngineUpdates {
     /// Specifies the type of transaction (e.g., `Buy` or `Sell`) to be executed.
-    #[serde(rename = "transaction_type")]
+    #[serde(rename = "transactiontype")]
     pub transaction_type: TransactionType,
 
     /// Sets the maximum number of trades allowed for the current session or strategy.
@@ -472,7 +475,10 @@ impl TradeEngine {
 
     /// New trade function to place new order with params
     pub async fn execute_trade(&mut self, tx_order_processor: Arc<mpsc::Sender<Signal>>) {
-        println!("Trade executed ...");
+        println!(
+            "Trade executed : -> Client Id = {:?} : Engine Id = {:?}",
+            self.client_id, self.trade_engine_id
+        );
         if let Some(req) = self.entry_req.clone() {
             self.trade_status = TradeStatus::Confirming;
             if let Err(err) = tx_order_processor
@@ -491,15 +497,15 @@ impl TradeEngine {
 
     /// Checks condition can it accept new trade according to condition or not
     pub fn can_accept_new_trade(&self, strategy: &Strategy) -> bool {
-        print!(
-            "\nStrategy can accept {:?}, Engine id {:?}, status {:?}, executed {:?}, max {:?}, client_id {:?}",
-            self.strategy,
-            self.trade_engine_id,
-            self.trade_status,
-            self.executed_trades,
-            self.max_trades,
-            self.client_id
-        );
+        // print!(
+        //     "\nStrategy can accept {:?}, Engine id {:?}, status {:?}, executed {:?}, max {:?}, client_id {:?}",
+        //     self.strategy,
+        //     self.trade_engine_id,
+        //     self.trade_status,
+        //     self.executed_trades,
+        //     self.max_trades,
+        //     self.client_id
+        // );
         if self.client_id != 0 {
             self.executed_trades < self.max_trades
                 && self.trade_status == TradeStatus::Closed
@@ -510,19 +516,6 @@ impl TradeEngine {
                 && self.strategy == *strategy
         }
     }
-
-    // pub fn trail_stop_loss(&mut self, current_price: f32) {
-    //     if self.transaction_type == TransactionType::BUY {
-    //         if current_price >= self.stop_loss_price + 5.0 {
-    //             self.stop_loss_price += 5.0;
-    //         }
-    //     } else if self.transaction_type == TransactionType::SELL {
-    //         if current_price <= self.stop_loss_price - 5.0 {
-    //             // self.stop_loss_price -= 5.0;
-    //             println!("SELL Trailing stop loss updated to")
-    //         }
-    //     }
-    // }
 
     /// Trailing stop loss function by 5 points
     pub fn trail_stop_loss(&mut self, current_price: f32) {
@@ -537,7 +530,10 @@ impl TradeEngine {
 
                 if new_stop > self.stop_loss_price {
                     self.stop_loss_price = new_stop;
-                    println!("BUY Trailing stop loss updated to {}", self.stop_loss_price);
+                    println!(
+                        "\nBUY Trailing stop loss updated to {}",
+                        self.stop_loss_price
+                    );
                 }
             }
         } else if self.transaction_type == TransactionType::SELL {
@@ -551,7 +547,7 @@ impl TradeEngine {
                 if new_stop < self.stop_loss_price {
                     self.stop_loss_price = new_stop;
                     println!(
-                        "SELL Trailing stop loss updated to {}",
+                        "\nSELL Trailing stop loss updated to {}",
                         self.stop_loss_price
                     );
                 }
@@ -588,7 +584,7 @@ impl TradeEngine {
     pub async fn update_values(&mut self) {
         match self.transaction_type {
             TransactionType::BUY => {
-                println!("Target in BUY -> {:?}", self.target);
+                println!("\nTarget in BUY -> {:?}", self.target);
                 self.target_price = if self.target == 0.0 {
                     self.trade_entry_price + 120000.0
                 } else {
@@ -597,7 +593,7 @@ impl TradeEngine {
                 self.stop_loss_price = self.trade_entry_price - self.sl;
             }
             TransactionType::SELL => {
-                println!("Target in SELL -> {:?}", self.target);
+                println!("\nTarget in SELL -> {:?}", self.target);
                 self.target_price = if self.target != 0.0 {
                     self.trade_entry_price - self.target
                 } else {
@@ -639,7 +635,7 @@ impl TradeEngine {
                 })
                 .await
             {
-                tracing::error!("Failed to send trade execution signal: {:?}", err);
+                tracing::error!("\nFailed to send trade execution signal: {:?}", err);
             }
         }
     }

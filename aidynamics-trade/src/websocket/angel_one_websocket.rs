@@ -441,7 +441,7 @@ impl AngelOneWebSocketClient {
                 while let Some(message) = rx.recv().await {
                     match message {
                         Signal::Subscribe(sub_req) => {
-                            println!("Received .... {:?}", sub_req);
+                            // println!("Received .... {:?}", sub_req);
                             // println!("Serialized {:?}", serde_json::to_string(&sub_req));
                             let mut write_locked = write_clone.lock().await;
                             let msg_to_send =

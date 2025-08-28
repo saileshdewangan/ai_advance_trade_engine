@@ -1,6 +1,7 @@
 #![allow(warnings)]
 // use aidynamics_trade::order_processor::order_processor::process_order;
 use aidynamics_trade_utils::http::HttpClient;
+use rand::Rng;
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use std::ops::Sub;
@@ -153,6 +154,96 @@ fn get_instrument(token: &str) -> Instrument {
         _ => Instrument::Other,
     }
 }
+
+/// Spawn a background task to generate random prices
+// async fn simulate_price_feed(tx: mpsc::Sender<Signal>, token: String, lower: f64, upper: f64) {
+
+//     tokio::spawn(async move {
+//         let mut interval = time::interval(Duration::from_millis(200));
+//         let mut rng = rand::thread_rng();
+
+//         loop {
+//             interval.tick().await;
+
+//             let ltp = rng.gen_range(lower..=upper);
+//             let signal = Signal::PriceFeed {
+//                 token: token.clone(),
+//                 ltp: ltp as f32,
+//             };
+
+//             if tx.send(signal).await.is_err() {
+//                 println!("Receiver dropped, stopping generator for token {}", token);
+//                 break;
+//             }
+//         }
+//     });
+// }
+
+fn simulate_price_feed(token: String, lower_bound: f64, upper_bound: f64) -> Signal {
+    let mut rng = rand::thread_rng();
+    let interval = Duration::from_millis(200);
+
+    // loop {
+    // Generate a random price within the specified range.
+    let ltp = rng.gen_range(lower_bound..=upper_bound);
+
+    // Create the price feed signal.
+    let signal = Signal::PriceFeed {
+        token: token.clone(),
+        ltp: ltp as f32,
+    };
+    signal
+
+    // Attempt to send the signal to the channel.
+    // If the receiver is dropped, `send()` will return an error.
+    // if tx.send(signal).await.is_err() {
+    //     eprintln!(
+    //         "Receiver dropped, shutting down price feed for token: {}",
+    //         token
+    //     );
+    //     break; // Stop the loop if the receiver is no longer listening.
+    // }
+
+    // Wait for the specified interval before generating the next price.
+    // time::sleep(interval).await;
+    // }
+}
+
+// async fn simulate_price_feed(
+//     token: String,
+//     lower_bound: f64,
+//     upper_bound: f64,
+//     tx: mpsc::Sender<Signal>,
+// ) {
+//     // We can move the rng creation here without issue because the `async` block below
+//     // will now be 'Send'.
+//     let mut rng = rand::thread_rng();
+//     let interval = Duration::from_millis(200);
+
+//     loop {
+//         // Generate a random price within the specified range.
+//         let ltp = rng.gen_range(lower_bound..=upper_bound);
+
+//         // Create the price feed signal.
+//         let signal = Signal::PriceFeed {
+//             token: token.clone(),
+//             ltp: ltp as f32,
+//         };
+
+//         // Attempt to send the signal to the channel.
+//         // If the receiver is dropped, `send()` will return an error.
+//         if tx.send(signal).await.is_err() {
+//             eprintln!(
+//                 "Receiver dropped, shutting down price feed for token: {}",
+//                 token
+//             );
+//             break; // Stop the loop if the receiver is no longer listening.
+//         }
+
+//         // Wait for the specified interval before generating the next price.
+//         time::sleep(interval).await;
+//     }
+// }
 
 impl Instrument {
     /// Determines if the instrument is an index
@@ -544,12 +635,11 @@ async fn main() {
         tx_redis: Sender<Signal>,
         tx_order_processor: Arc<Sender<Signal>>,
     ) {
-        let mut client_nodes: HashMap<u32, ClientNode> = HashMap::new();
+        // let mut client_nodes: HashMap<u32, ClientNode> = HashMap::new();
         let mut client_nodes_set: HashSet<u32> = HashSet::new();
         while let Some(msg) = rx_main.recv().await {
             // println!("\nReceived by main : {:?}", msg);
             let msg_clone = msg.clone();
-
             match msg_clone {
                 Signal::AddClient {
                     api_key,
@@ -563,6 +653,8 @@ async fn main() {
                         let (tx, rx) = mpsc::channel(100);
 
                         client_channels.insert(client_id, tx.clone());
+
+                        println!("\n New Client Added : {:?} \n", client_id);
 
                         let mut new_client_node = ClientNode {
                             client_id,
@@ -579,6 +671,10 @@ async fn main() {
                         tokio::spawn(async move {
                             new_client_node.process_engine(rx).await;
                         });
+                        println!(
+                            "\n\n\n NO OF CHANNELS INSIDE ADD CLIENT : {:?} \n\n\n",
+                            client_channels.len()
+                        );
                     }
                     for (_, tx) in client_channels.iter() {
                         let new_msg = msg.clone();
@@ -605,6 +701,7 @@ async fn main() {
                     let client_id = engine.client_id;
                     let trade_engine_id = engine.trade_engine_id;
                     if !client_nodes_set.contains(&client_id) {
+                        println!("\n NEW CLIENT NODE FOR CLIENT ID : {:?}", client_id);
                         client_nodes_set.insert(client_id);
 
                         // let mut map = client_channels.write().await;
@@ -637,12 +734,29 @@ async fn main() {
                             new_client_node.process_engine(rx).await;
                         });
                     }
-                    // let map = client_channels.read().await;
-                    // for (_client_id, tx) in map.iter() {
-                    for (_, tx) in client_channels.iter() {
-                        let new_msg = msg.clone();
-                        let _ = tx.send(new_msg).await;
+                    println!(
+                        "\n\n\n NO OF CHANNELS IN NEW TRADE ENGINE : {:?} \n\n\n",
+                        client_channels.len()
+                    );
+                    // client_channels.get(&client_id).map(|tx| {
+                    //     let _ = tx.send(msg.clone());
+                    // });
+                    match client_channels.get(&client_id) {
+                        Some(tx) => {
+                            let _ = tx.send(msg).await;
+                        }
+                        None => {
+                            println!("\n Client ID not found in channels, broadcasting to all clients \n");
+                            for (_, tx) in client_channels.iter() {
+                                let new_msg = msg.clone();
+                                let _ = tx.send(new_msg).await;
+                            }
+                        }
                     }
+                    // for (_, tx) in client_channels.iter() {
+                    //     let new_msg = msg.clone();
+                    //     let _ = tx.send(new_msg).await;
+                    // }
                 }
                 Signal::Disconnect(client_id) => {
                     if client_id != 0 {
@@ -736,8 +850,13 @@ async fn main() {
     InitializeApp(tx_redis_init).await;
 
     loop {
+        let tx_main_loop = tx_main.clone();
         // get_instance_id(&auth_token, &redis_client_clone).await;
-        std::thread::sleep(std::time::Duration::from_secs(5));
+        let signal = simulate_price_feed("26000".to_string(), 24400.0, 24600.0);
+        tx_main_loop.send(signal).await;
+        std::thread::sleep(std::time::Duration::from_millis(200));
+
+        // std::thread::sleep(std::time::Duration::from_secs(5));
         // println!("Main function is still running...");
     }
 }

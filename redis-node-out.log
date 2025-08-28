@@ -1,0 +1,535 @@
+Connecting to price feed from shared.js.....
+Connecting to price feed from shared.js.....
+Connecting to price feed from shared.js.....
+Session data setting to redis
+
+CALLED ........ initialize_app :  undefined
+Initialization request received from Rust app
+
+ trade engine size after adding 4
+
+CALLED ........ execute_demo_trade :  {
+  client_id: 0,
+  trade_engine_id: 42,
+  order_req: {
+    transactiontype: 'BUY',
+    variety: 'NORMAL',
+    tradingsymbol: 'NIFTY15MAY2524950CE',
+    symboltoken: '46288',
+    exchange: 'NFO',
+    ordertype: 'MARKET',
+    producttype: 'INTRADAY',
+    duration: 'DAY',
+    price: '0',
+    disclosedquantity: '75',
+    quantity: '75'
+  },
+  price: 188.45,
+  margin_required: 14133.75
+}
+Subscribing , 46288
+trade engine id 42
+
+
+ TRADE ID = 566
+
+Symbol -> NIFTY, Strategy Id -> 1
+
+ {
+  signal: {
+    type: 'order_placed',
+    data: { trade_engine_id: 42, trade_id: 566, price: 188.45, strategy: 1 }
+  }
+}
+
+CALLED ........ execute_demo_trade :  {
+  client_id: 0,
+  trade_engine_id: 44,
+  order_req: {
+    transactiontype: 'BUY',
+    variety: 'NORMAL',
+    tradingsymbol: 'BANKNIFTY29MAY2556000CE',
+    symboltoken: '58579',
+    exchange: 'NFO',
+    ordertype: 'MARKET',
+    producttype: 'INTRADAY',
+    duration: 'DAY',
+    price: '0',
+    disclosedquantity: '30',
+    quantity: '30'
+  },
+  price: 606.45,
+  margin_required: 18193.5
+}
+Subscribing , 58579
+trade engine id 44
+
+
+ TRADE ID = 567
+
+Symbol -> BANKNIFTY, Strategy Id -> 1
+
+ {
+  signal: {
+    type: 'order_placed',
+    data: { trade_engine_id: 44, trade_id: 567, price: 606.45, strategy: 1 }
+  }
+}
+
+CALLED ........ update_square_off_demo :  {
+  client_id: 0,
+  trade_id: 567,
+  remove_trade_engine: false,
+  strategy: 1,
+  order: {
+    transactiontype: 'SELL',
+    variety: 'NORMAL',
+    tradingsymbol: 'BANKNIFTY29MAY2556000CE',
+    symboltoken: '58579',
+    exchange: 'NFO',
+    ordertype: 'MARKET',
+    producttype: 'INTRADAY',
+    duration: 'DAY',
+    price: '0',
+    disclosedquantity: '30',
+    quantity: '30'
+  },
+  price: 555.45
+}
+
+ORDER REQ in Demo Square off  {
+  transactiontype: 'SELL',
+  variety: 'NORMAL',
+  tradingsymbol: 'BANKNIFTY29MAY2556000CE',
+  symboltoken: '58579',
+  exchange: 'NFO',
+  ordertype: 'MARKET',
+  producttype: 'INTRADAY',
+  duration: 'DAY',
+  price: '0',
+  disclosedquantity: '30',
+  quantity: '30'
+}
+
+
+ TRADE ID = 567
+
+Trade id  567
+
+Client id  0
+
+Order  {
+  transactiontype: 'SELL',
+  variety: 'NORMAL',
+  tradingsymbol: 'BANKNIFTY29MAY2556000CE',
+  symboltoken: '58579',
+  exchange: 'NFO',
+  ordertype: 'MARKET',
+  producttype: 'INTRADAY',
+  duration: 'DAY',
+  price: '0',
+  disclosedquantity: '30',
+  quantity: '30'
+}
+[
+  0,
+  567,
+  'NORMAL',
+  'MARKET',
+  'INTRADAY',
+  555.45,
+  0,
+  '30',
+  '30',
+  'BANKNIFTY29MAY2556000CE',
+  'SELL',
+  'NFO',
+  '58579',
+  'OTPIDX',
+  'closed',
+  'closed'
+]
+Published close position
+FIREBASE KEY : -OQ6jxHkERC_RGkW8Qg_
+
+CALLED ........ update_square_off_demo :  {
+  client_id: 0,
+  trade_id: 566,
+  remove_trade_engine: false,
+  strategy: 1,
+  order: {
+    transactiontype: 'SELL',
+    variety: 'NORMAL',
+    tradingsymbol: 'NIFTY15MAY2524950CE',
+    symboltoken: '46288',
+    exchange: 'NFO',
+    ordertype: 'MARKET',
+    producttype: 'INTRADAY',
+    duration: 'DAY',
+    price: '0',
+    disclosedquantity: '75',
+    quantity: '75'
+  },
+  price: 157.95
+}
+
+ORDER REQ in Demo Square off  {
+  transactiontype: 'SELL',
+  variety: 'NORMAL',
+  tradingsymbol: 'NIFTY15MAY2524950CE',
+  symboltoken: '46288',
+  exchange: 'NFO',
+  ordertype: 'MARKET',
+  producttype: 'INTRADAY',
+  duration: 'DAY',
+  price: '0',
+  disclosedquantity: '75',
+  quantity: '75'
+}
+
+
+ TRADE ID = 566
+
+Trade id  566
+
+Client id  0
+
+Order  {
+  transactiontype: 'SELL',
+  variety: 'NORMAL',
+  tradingsymbol: 'NIFTY15MAY2524950CE',
+  symboltoken: '46288',
+  exchange: 'NFO',
+  ordertype: 'MARKET',
+  producttype: 'INTRADAY',
+  duration: 'DAY',
+  price: '0',
+  disclosedquantity: '75',
+  quantity: '75'
+}
+[
+  0,          566,
+  'NORMAL',   'MARKET',
+  'INTRADAY', 157.95,
+  0,          '75',
+  '75',       'NIFTY15MAY2524950CE',
+  'SELL',     'NFO',
+  '46288',    'OTPIDX',
+  'closed',   'closed'
+]
+Published close position
+FIREBASE KEY : -OQ6jwrjG6o1m-zlzKnM
+
+CALLED ........ execute_demo_trade :  {
+  client_id: 0,
+  trade_engine_id: 44,
+  order_req: {
+    transactiontype: 'BUY',
+    variety: 'NORMAL',
+    tradingsymbol: 'BANKNIFTY29MAY2554700PE',
+    symboltoken: '58554',
+    exchange: 'NFO',
+    ordertype: 'MARKET',
+    producttype: 'INTRADAY',
+    duration: 'DAY',
+    price: '0',
+    disclosedquantity: '30',
+    quantity: '30'
+  },
+  price: 572,
+  margin_required: 17205
+}
+Subscribing , 58554
+trade engine id 44
+
+
+ TRADE ID = 568
+
+Symbol -> BANKNIFTY, Strategy Id -> 1
+
+ {
+  signal: {
+    type: 'order_placed',
+    data: { trade_engine_id: 44, trade_id: 568, price: 572, strategy: 1 }
+  }
+}
+
+CALLED ........ execute_demo_trade :  {
+  client_id: 0,
+  trade_engine_id: 42,
+  order_req: {
+    transactiontype: 'BUY',
+    variety: 'NORMAL',
+    tradingsymbol: 'NIFTY15MAY2524800PE',
+    symboltoken: '46283',
+    exchange: 'NFO',
+    ordertype: 'MARKET',
+    producttype: 'INTRADAY',
+    duration: 'DAY',
+    price: '0',
+    disclosedquantity: '75',
+    quantity: '75'
+  },
+  price: 201.9,
+  margin_required: 15142.5
+}
+Subscribing , 46283
+trade engine id 42
+
+
+ TRADE ID = 569
+
+Symbol -> NIFTY, Strategy Id -> 1
+
+ {
+  signal: {
+    type: 'order_placed',
+    data: { trade_engine_id: 42, trade_id: 569, price: 201.9, strategy: 1 }
+  }
+}
+
+CALLED ........ update_square_off_demo :  {
+  client_id: 0,
+  trade_id: 569,
+  remove_trade_engine: false,
+  strategy: 1,
+  order: {
+    transactiontype: 'SELL',
+    variety: 'NORMAL',
+    tradingsymbol: 'NIFTY15MAY2524800PE',
+    symboltoken: '46283',
+    exchange: 'NFO',
+    ordertype: 'MARKET',
+    producttype: 'INTRADAY',
+    duration: 'DAY',
+    price: '0',
+    disclosedquantity: '75',
+    quantity: '75'
+  },
+  price: 259.9
+}
+
+ORDER REQ in Demo Square off  {
+  transactiontype: 'SELL',
+  variety: 'NORMAL',
+  tradingsymbol: 'NIFTY15MAY2524800PE',
+  symboltoken: '46283',
+  exchange: 'NFO',
+  ordertype: 'MARKET',
+  producttype: 'INTRADAY',
+  duration: 'DAY',
+  price: '0',
+  disclosedquantity: '75',
+  quantity: '75'
+}
+
+
+ TRADE ID = 569
+
+Trade id  569
+
+Client id  0
+
+Order  {
+  transactiontype: 'SELL',
+  variety: 'NORMAL',
+  tradingsymbol: 'NIFTY15MAY2524800PE',
+  symboltoken: '46283',
+  exchange: 'NFO',
+  ordertype: 'MARKET',
+  producttype: 'INTRADAY',
+  duration: 'DAY',
+  price: '0',
+  disclosedquantity: '75',
+  quantity: '75'
+}
+[
+  0,          569,
+  'NORMAL',   'MARKET',
+  'INTRADAY', 259.9,
+  0,          '75',
+  '75',       'NIFTY15MAY2524800PE',
+  'SELL',     'NFO',
+  '46283',    'OTPIDX',
+  'closed',   'closed'
+]
+Published close position
+FIREBASE KEY : 
+
+CALLED ........ update_square_off_demo :  {
+  client_id: 0,
+  trade_id: 568,
+  remove_trade_engine: false,
+  strategy: 1,
+  order: {
+    transactiontype: 'SELL',
+    variety: 'NORMAL',
+    tradingsymbol: 'BANKNIFTY29MAY2554700PE',
+    symboltoken: '58554',
+    exchange: 'NFO',
+    ordertype: 'MARKET',
+    producttype: 'INTRADAY',
+    duration: 'DAY',
+    price: '0',
+    disclosedquantity: '30',
+    quantity: '30'
+  },
+  price: 521.65
+}
+
+ORDER REQ in Demo Square off  {
+  transactiontype: 'SELL',
+  variety: 'NORMAL',
+  tradingsymbol: 'BANKNIFTY29MAY2554700PE',
+  symboltoken: '58554',
+  exchange: 'NFO',
+  ordertype: 'MARKET',
+  producttype: 'INTRADAY',
+  duration: 'DAY',
+  price: '0',
+  disclosedquantity: '30',
+  quantity: '30'
+}
+
+
+ TRADE ID = 568
+
+Trade id  568
+
+Client id  0
+
+Order  {
+  transactiontype: 'SELL',
+  variety: 'NORMAL',
+  tradingsymbol: 'BANKNIFTY29MAY2554700PE',
+  symboltoken: '58554',
+  exchange: 'NFO',
+  ordertype: 'MARKET',
+  producttype: 'INTRADAY',
+  duration: 'DAY',
+  price: '0',
+  disclosedquantity: '30',
+  quantity: '30'
+}
+[
+  0,
+  568,
+  'NORMAL',
+  'MARKET',
+  'INTRADAY',
+  521.65,
+  0,
+  '30',
+  '30',
+  'BANKNIFTY29MAY2554700PE',
+  'SELL',
+  'NFO',
+  '58554',
+  'OTPIDX',
+  'closed',
+  'closed'
+]
+Published close position
+FIREBASE KEY : -OQ6m7t29GL3TL8wjv9E
+
+CALLED ........ execute_demo_trade :  {
+  client_id: 0,
+  trade_engine_id: 45,
+  order_req: {
+    transactiontype: 'BUY',
+    variety: 'NORMAL',
+    tradingsymbol: 'NIFTY15MAY2524650PE',
+    symboltoken: '46277',
+    exchange: 'NFO',
+    ordertype: 'MARKET',
+    producttype: 'INTRADAY',
+    duration: 'DAY',
+    price: '0',
+    disclosedquantity: '75',
+    quantity: '75'
+  },
+  price: 198.05,
+  margin_required: 14853.75
+}
+Subscribing , 46277
+trade engine id 45
+
+
+ TRADE ID = 570
+
+Symbol -> NIFTY, Strategy Id -> 2
+
+ {
+  signal: {
+    type: 'order_placed',
+    data: { trade_engine_id: 45, trade_id: 570, price: 198.05, strategy: 2 }
+  }
+}
+
+CALLED ........ update_square_off_demo :  {
+  client_id: 0,
+  trade_id: 570,
+  remove_trade_engine: false,
+  strategy: 2,
+  order: {
+    transactiontype: 'SELL',
+    variety: 'NORMAL',
+    tradingsymbol: 'NIFTY15MAY2524650PE',
+    symboltoken: '46277',
+    exchange: 'NFO',
+    ordertype: 'MARKET',
+    producttype: 'INTRADAY',
+    duration: 'DAY',
+    price: '0',
+    disclosedquantity: '75',
+    quantity: '75'
+  },
+  price: 167.3
+}
+
+ORDER REQ in Demo Square off  {
+  transactiontype: 'SELL',
+  variety: 'NORMAL',
+  tradingsymbol: 'NIFTY15MAY2524650PE',
+  symboltoken: '46277',
+  exchange: 'NFO',
+  ordertype: 'MARKET',
+  producttype: 'INTRADAY',
+  duration: 'DAY',
+  price: '0',
+  disclosedquantity: '75',
+  quantity: '75'
+}
+
+
+ TRADE ID = 570
+
+Trade id  570
+
+Client id  0
+
+Order  {
+  transactiontype: 'SELL',
+  variety: 'NORMAL',
+  tradingsymbol: 'NIFTY15MAY2524650PE',
+  symboltoken: '46277',
+  exchange: 'NFO',
+  ordertype: 'MARKET',
+  producttype: 'INTRADAY',
+  duration: 'DAY',
+  price: '0',
+  disclosedquantity: '75',
+  quantity: '75'
+}
+[
+  0,          570,
+  'NORMAL',   'MARKET',
+  'INTRADAY', 167.3,
+  0,          '75',
+  '75',       'NIFTY15MAY2524650PE',
+  'SELL',     'NFO',
+  '46277',    'OTPIDX',
+  'closed',   'closed'
+]
+Published close position
+FIREBASE KEY : -OQ6vBWbWOYhc6D-yhcp

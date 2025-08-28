@@ -16,7 +16,7 @@ extern crate serde;
 
 /// Type alias for Result
 /// Type alias for error
-pub type Error = Box<dyn std::error::Error>;
+pub type Error = Box<dyn std::error::Error + Send + Sync>;
 
 /// Type alias for result
 pub type Result<T> = std::result::Result<T, Error>;

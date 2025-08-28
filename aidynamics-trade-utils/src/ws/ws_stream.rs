@@ -19,7 +19,8 @@ use tokio_tungstenite::{
 use crate::Error;
 
 /// Type alias for result
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+// type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 /// Type alias for WebSocketStream
 type WebSocket = tokio_tungstenite::WebSocketStream<MaybeTlsStream<TcpStream>>;
@@ -162,15 +163,6 @@ where
     }
 }
 
-
-
-
-
-
-
-
-
-
 // #![allow(unused)]
 
 // use std::{
@@ -222,11 +214,11 @@ where
 //         /// Connects to a [`WebSocket`] server.
 //         pub async fn connect(request: Request) -> Result<Self> {
 //             debug!("Connecting to webSocket at {}", request.uri());
-    
+
 //             let inner = connect_async(request)
 //                 .await
 //                 .map(|(websocket, _)| websocket)?;
-    
+
 //             Ok(Self {
 //                 inner: Arc::new(Mutex::new(inner)), // Initialize Arc<Mutex>
 //                 p: PhantomData,

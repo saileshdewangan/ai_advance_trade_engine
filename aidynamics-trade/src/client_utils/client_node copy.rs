@@ -154,7 +154,6 @@ impl ClientNode {
                         Signal::PriceFeed { token, ltp } => {
                             let instrument = get_instrument(&token);
                             let active_ids = self.active_trade_ids.clone();
-
                             for trade_engine_id in active_ids {
                                 // if let Some(handler) = self.trade_engines.get_mut(&trade_engine_id) {
                                 {
@@ -172,8 +171,8 @@ impl ClientNode {
                                                 {
                                                     match handler.position_type {
                                                         TransactionType::BUY => {
-                                                            // handler.trade_status =
-                                                            //     TradeStatus::Processing; // lock it
+                                                            handler.trade_status =
+                                                                TradeStatus::Processing; // lock it
                                                             if ltp > handler.trigger_price {
                                                                 handler
                                                                     .execute_trade(Arc::new(
@@ -183,8 +182,8 @@ impl ClientNode {
                                                             }
                                                         }
                                                         TransactionType::SELL => {
-                                                            // handler.trade_status =
-                                                            //     TradeStatus::Processing; // lock it
+                                                            handler.trade_status =
+                                                                TradeStatus::Processing; // lock it
                                                             if ltp < handler.trigger_price {
                                                                 handler
                                                                     .execute_trade(Arc::new(
@@ -209,15 +208,6 @@ impl ClientNode {
                                                     if handler.transaction_type
                                                         == TransactionType::BUY
                                                     {
-                                                        // info!(
-                                                        //     ?handler.transaction_type,
-                                                        //     pnl = (ltp - handler.trade_entry_price)
-                                                        //         * handler.quantity as f32,
-                                                        //     Symbol = handler.trading_symbol,
-                                                        //     entry = handler.trade_entry_price,
-                                                        //     Ltp = ltp
-                                                        // );
-
                                                         handler.trail_stop_loss(ltp);
 
                                                         if ltp <= handler.stop_loss_price
@@ -238,11 +228,6 @@ impl ClientNode {
                                                             info!("\n\nBuy square off trade");
                                                         }
                                                     } else {
-                                                        // info!(
-                                                        //     ?handler.transaction_type, pnl = (handler.trade_entry_price - ltp)
-                                                        //     * handler.quantity as f32, target_price = handler.target_price,
-                                                        //     sl_price = handler.stop_loss_price);
-                                                        // handler.trail_stop_loss(ltp);
                                                         println!("\n");
                                                         info!("Entry Price {},SL price = {}, Target price = {}, LTP = {}",handler.trade_entry_price, handler.stop_loss_price, handler.target_price, ltp);
                                                         handler.trail_stop_loss(ltp);
@@ -271,77 +256,19 @@ impl ClientNode {
                                 }
                             }
                         }
-                        // Signal::InitializeOpenTrade {
-                        //     new_trade,
-                        //     trade_res,
-                        // } => {
-                        //     // if new_trade.strategy == self.strategy_to_process {
-                        //     if let Some(existing_engine) =
-                        //         self.trade_engines.get_mut(&trade_res.trade_engine_id)
-                        //     {
-                        //         let can_accept = existing_engine.can_accept_new_trade(&new_trade.strategy)
-                        //         println!(
-                        //             "\nCan accept new trade ? = {:?} for engine id = {:?}",
-                        //             can_accept, existing_engine.trade_engine_id
-                        //         );
-                        //         if can_accept {
-                        //             info!("new_trade_init = {:?} Res {:?}", new_trade, trade_res);
-
-                        //             existing_engine.update_from(&new_trade).await;
-
-                        //             let subscription = SubscriptionBuilder::new("abcde12345")
-                        //                 .mode(SubscriptionMode::Ltp)
-                        //                 .subscribe(
-                        //                     SubscriptionExchange::NSEFO,
-                        //                     vec![existing_engine.symbol_token.as_str()],
-                        //                 )
-                        //                 .build();
-
-                        //             existing_engine.trade_entry_price = trade_res.price;
-                        //             existing_engine.update_values().await;
-
-                        //             existing_engine.trade_id = trade_res.trade_id;
-                        //             existing_engine.prepare_exit_req().await;
-
-                        //             self.active_trade_ids.insert(trade_res.trade_engine_id);
-
-                        //             if let Err(e) = self
-                        //                 .tx_angelone_sender
-                        //                 .send(Signal::Subscribe(subscription))
-                        //                 .await
-                        //             {
-                        //                 error!("send_subscription_failed {:?}", e);
-                        //             }
-
-                        //             // println!("\nPrepared engine {:?}", existing_engine);
-                        //         }
-                        //         // else {
-                        //         //     println!(
-                        //         //     "\nNo TradeEngine with corresponding symbol {:?} and strategy {:?}",
-                        //         //     new_trade.symbol, new_trade.strategy
-                        //         // );
-                        //         // }
-                        //     }
-                        //     // }
-                        // }
+                        
                         Signal::OpenNewTrade(engine) => {
-                            println!(
-                                "\nOpen new trade Client Id = {:?} : Strategy = {:?}",
-                                self.client_id, engine.strategy
-                            );
+                            println!("\nOpen new trade : Strategy = {:?}", engine.strategy);
                             // if engine.strategy == self.strategy_to_process {
                             let engine_clone = engine.clone();
-                            // let tx_angelone_sender_clone = self.tx_angelone_sender.clone();
-                            // let mut trade_handlers_clone = self.trade_engines.clone(); // Clone trade_handlers
-                            // let tx_main_new = tx_main_clone.clone();
-
+                          
                             // tokio::spawn(async move {
                             for (_, existing_engine) in self.trade_engines.iter_mut() {
-                                let accepted: bool =
-                                    existing_engine.can_accept_new_trade(&engine_clone.strategy);
-                                if existing_engine.symbol == engine_clone.symbol && accepted {
+                                if existing_engine.symbol == engine_clone.symbol
+                                    && existing_engine.can_accept_new_trade(&engine_clone.strategy)
+                                {
                                     println!("\n");
-                                    info!("\nTrade_pushed {:?}", engine_clone);
+                                    info!("\ntrade_pushed {:?}", engine_clone);
 
                                     existing_engine.update_from(&engine_clone).await;
 
@@ -380,59 +307,22 @@ impl ClientNode {
                                 self.active_trade_ids.insert(trade_engine.trade_engine_id);
                                 self.handler_ids.remove(&trade_engine.trade_engine_id);
                             }
-                            // self.trade_engines
-                            //     .insert(trade_engine.trade_engine_id, trade_engine);
+                            self.trade_engines
+                                .insert(trade_engine.trade_engine_id, trade_engine);
                             // }
 
-                            let new_engine = trade_engine.clone();
-                            let mut to_update = vec![];
-
-                            for (_, existing_engine) in self.trade_engines.iter_mut() {
-                                if existing_engine.strategy == new_engine.strategy
-                                    && existing_engine.symbol == new_engine.symbol
-                                    && existing_engine.client_id == new_engine.client_id
-                                {
-                                    to_update.push(existing_engine.trade_engine_id);
-                                }
-                            }
-
-                            // Apply updates after iteration
-                            for id in to_update {
-                                self.trade_engines.insert(id, new_engine.clone());
-                            }
-
                             println!(
-                                "\nUpdated trade engines Client id = {:?} : Engines = {:?}\n",
-                                self.client_id,
+                                "\nTotal trade engines on update {:?}\n",
                                 self.trade_engines.len()
                             );
                         }
 
-                        // Signal::UpdateMargin { client_id, status } => {
-                        //     if client_id != 0 {
-                        //         for id in self.active_trade_ids.clone() {
-                        //             if let Some(handler) = self.trade_engines.get_mut(&id) {
-                        //                 if handler.client_id == client_id {
-                        //                     // handler.margin = status;
-                        //                     info!("Margin received {:?}", status)
-                        //                 }
-                        //             }
-                        //         }
-                        //         for id in self.handler_ids.clone() {
-                        //             if let Some(handler) = self.trade_engines.get_mut(&id) {
-                        //                 if handler.client_id == client_id {
-                        //                     handler.margin = status
-                        //                 }
-                        //             }
-                        //         }
-                        //     }
-                        // }
                         Signal::OrderPlaced(resp) => {
                             // if resp.strategy == self.strategy_to_process {
                             if let Some(handler) = self.trade_engines.get_mut(&resp.trade_engine_id)
                             {
                                 if handler.trade_status == TradeStatus::Confirming
-                                    || handler.trade_status == TradeStatus::Executing
+                                    || handler.trade_status == TradeStatus::Processing
                                 {
                                     handler.trade_status = TradeStatus::Open;
                                     handler.trade_entry_price = resp.price;
@@ -451,19 +341,8 @@ impl ClientNode {
                             if let Some(handler) = self.trade_engines.get_mut(&resp.trade_engine_id)
                             {
                                 if handler.trade_status == TradeStatus::Confirming
-                                    || handler.trade_status == TradeStatus::Executing
+                                    || handler.trade_status == TradeStatus::Processing
                                 {
-                                    // handler.trade_status = TradeStatus::Closed;
-                                    // handler.exchange_type = ExchangeType::NFO;
-                                    // handler.symbol_token = String::from("");
-                                    // handler.trigger_price = 0.0;
-                                    // handler.trading_symbol = String::from("");
-                                    // handler.stop_loss_price - 0.0;
-
-                                    // println!(
-                                    //     "\nOpen order Rejected ? Trade Engine Id -> {:?}",
-                                    //     handler.trade_engine_id
-                                    // );
                                     self.active_trade_ids.remove(&resp.trade_engine_id);
                                     handler.reset().await;
                                 }
@@ -475,19 +354,8 @@ impl ClientNode {
                             if let Some(handler) = self.trade_engines.get_mut(&resp.trade_engine_id)
                             {
                                 if handler.trade_status == TradeStatus::Confirming
-                                    || handler.trade_status == TradeStatus::Executing
+                                    || handler.trade_status == TradeStatus::Processing
                                 {
-                                    // handler.trade_status = TradeStatus::Closed;
-                                    // handler.exchange_type = ExchangeType::NFO;
-                                    // handler.symbol_token = String::from("");
-                                    // handler.trigger_price = 0.0;
-                                    // handler.trading_symbol = String::from("");
-                                    // handler.stop_loss_price - 0.0;
-
-                                    // println!(
-                                    //     "\nOpen order Rejected ? Trade Engine Id -> {:?}",
-                                    //     handler.trade_engine_id
-                                    // );
                                     self.active_trade_ids.remove(&resp.trade_engine_id);
                                     handler.reset().await;
                                 }
@@ -500,18 +368,12 @@ impl ClientNode {
                             transaction_type,
                             trigger_price,
                         } => {
-                            // if strategy == self.strategy_to_process {
-                            // let mut trade_handlers_clone = self.trade_engines.clone(); // Clone trade_handlers
-                            //                                                            // let tx_broadcast = self.tx_broadcast.clone();
-                            // let tx_main_new_clone_2 = tx_main_clone.clone();
-                            // let active_trade_ids = self.active_trade_ids.clone();
-
                             // tokio::spawn(async move {
                             for id in self.active_trade_ids.clone() {
                                 if let Some(handler) = self.trade_engines.get_mut(&id) {
                                     if (handler.trade_status == TradeStatus::Pending
-                                        || handler.trade_status == TradeStatus::Confirming
-                                        || handler.trade_status == TradeStatus::Executing)
+                                        || handler.trade_status == TradeStatus::Processing
+                                        || handler.trade_status == TradeStatus::Confirming)
                                         && handler.symbol == symbol
                                         && handler.strategy == strategy
                                         && handler.position_type == transaction_type
@@ -533,8 +395,8 @@ impl ClientNode {
                                             .await;
                                         println!("\n");
                                         info!(
-                                            "Order cancelled ? Client id -> {:?} Engine Id -> {:?}",
-                                            handler.client_id, handler.trade_engine_id
+                                            "Order cancelled ? Trade Engine Id -> {:?}",
+                                            handler.trade_engine_id
                                         );
                                     }
                                 }
@@ -561,23 +423,14 @@ impl ClientNode {
                             strategy,
                             position_type,
                         } => {
-                            // // if strategy == self.strategy_to_process {
-                            // let tx_order_main = self.tx_main.clone();
-                            // // let tx_broadcast = self.tx_broadcast.clone();
-                            // let active_trade_ids = self.active_trade_ids.clone();
-
-                            let mut trade_handlers_map: HashMap<u32, TradeEngine> = HashMap::new();
+                           let mut trade_handlers_map: HashMap<u32, TradeEngine> = HashMap::new();
                             for id in self.active_trade_ids.clone() {
                                 if let Some(handler) = self.trade_engines.get(&id) {
                                     trade_handlers_map.insert(id, handler.clone());
                                 }
                             }
                             println!("\n");
-                            info!(
-                                "\nSquared Off Active handlers Client id = {:?} : {:?}",
-                                self.client_id,
-                                self.active_trade_ids.len()
-                            );
+                            info!("\nActive handlers : {:?}", self.active_trade_ids.len());
 
                             // tokio::spawn(async move {
                             for (_, handler) in trade_handlers_map.iter_mut() {
@@ -638,8 +491,8 @@ impl ClientNode {
                                     handler.trade_status = TradeStatus::Open;
                                     println!("\n");
                                     info!(
-                                        "Square Off Error Client id -> {:?} -> error : {:?}, message : {:?}",
-                                        handler.client_id,error, message
+                                        "Square Off Error -> error : {:?}, message : {:?}",
+                                        error, message
                                     );
                                 }
                             }
@@ -650,10 +503,7 @@ impl ClientNode {
                                     self.active_trade_ids.remove(&trade_engine_id);
                                     handler.reset().await;
                                     println!("\n");
-                                    info!(
-                                        "Trade Closed Client id -> {:?} -> {:?}",
-                                        handler.client_id, handler.trade_engine_id
-                                    );
+                                    info!("Trade Closed -> {:?}", handler.trade_engine_id);
                                 }
                             }
                         }
@@ -686,8 +536,8 @@ impl ClientNode {
                                 // } else {
                                 } else {
                                     println!(
-                                        "\nNew trade engine Client id = {:?} : Engine Id {:?}",
-                                        new_engine.client_id, new_engine.trade_engine_id
+                                        "\nAdding new trade engine with ID: {}",
+                                        new_engine.trade_engine_id
                                     );
                                     println!("\n");
                                     info!(
@@ -759,11 +609,6 @@ impl ClientNode {
                             let strategy_clone = strategy.clone(); // Clone strategy outside of the task so it is not moved.
                             let tx_redis_clone = self.tx_redis.clone();
 
-                            // info!(
-                            //     "\n\nOrder clone {:?} client id {:?}",
-                            //     order_clone.clone(),
-                            //     client_id.clone()
-                            // );
                             println!("\n");
                             info!(
                                 "Executing -> Engine = {:?} client id = {:?}",
@@ -775,42 +620,19 @@ impl ClientNode {
                                 let client_arc_clone = client_arc.clone();
                                 let price_hash_clone = price_hashmap.clone();
 
-                                println!("\n Engines size : {:?}", self.trade_engines.len());
-                                if let Some(engine) = self.trade_engines.get_mut(&trade_engine_id) {
-                                    if engine.trade_status == TradeStatus::Confirming {
-                                        engine.trade_status = TradeStatus::Executing;
-
-                                        // tx_main_clone
-                                        //     .send(Signal::UpdateActiveTrades(updatable_engine))
-                                        //     .await
-                                        //     .unwrap();
-
-                                        tokio::spawn(async move {
-                                            OrderProcessor::handle_order_placement(
-                                                client_id,
-                                                client_arc_clone,
-                                                order_clone,
-                                                tx_main_clone,
-                                                trade_engine_id,
-                                                strategy_clone,
-                                                tx_redis_clone,
-                                                price_hash_clone,
-                                            )
-                                            .await;
-                                        });
-                                    }
-                                }
-                                //  else {
-                                //     println!(
-                                //         "\n Engines size : {:?} on Aborted",
-                                //         self.trade_engines.len()
-                                //     );
-
-                                //     error!(
-                                //         "Trade engine Id {} not found. Aborting order execution.",
-                                //         trade_engine_id
-                                //     );
-                                // }
+                                tokio::spawn(async move {
+                                    OrderProcessor::handle_order_placement(
+                                        client_id,
+                                        client_arc_clone,
+                                        order_clone,
+                                        tx_main_clone,
+                                        trade_engine_id,
+                                        strategy_clone,
+                                        tx_redis_clone,
+                                        price_hash_clone,
+                                    )
+                                    .await;
+                                });
                             } else {
                                 // error!()
                                 error!("Client executor not found for client id: {:?}", client_id);
@@ -857,10 +679,6 @@ impl ClientNode {
                             // Here add a new client to place order to self.tx_order_processor
                             if self.client_id == client_id && self.angelone_client.is_some() {
                                 self.angelone_client = None;
-                                // self.tx_main
-                                //     .send(Signal::RemoveClient { client_id })
-                                //     .await
-                                //     .unwrap();
                             }
                         }
                         Signal::RemoveTradeEngine(trade_engine_id) => {
@@ -1028,8 +846,7 @@ impl ClientNode {
                 None => {
                     // println!("No message");
                 } // Err(e) => {
-                  //     println!("Error {:?}", e);
-                  // }
+                  
             }
         }
     }

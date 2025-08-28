@@ -8,7 +8,7 @@ use crate::ws::{SubscriptionExchange, SubscriptionMode};
 use super::{Quote, SnapQuote};
 
 /// Data response received from websocket server as binary message
-#[derive(Debug, Deserialize,Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Message {
     /// Subscription Mode
     pub mode: SubscriptionMode,
@@ -29,7 +29,8 @@ pub struct Message {
 }
 
 impl TryFrom<&[u8]> for Message {
-    type Error = Box<dyn std::error::Error>;
+    // type Error = Box<dyn std::error::Error>;
+    type Error = Box<dyn std::error::Error + Send + Sync + 'static>;
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
         let mut rdr = Cursor::new(value);
@@ -72,7 +73,8 @@ impl TryFrom<&[u8]> for Message {
 }
 
 impl TryFrom<Vec<u8>> for Message {
-    type Error = Box<dyn std::error::Error>;
+    // type Error = Box<dyn std::error::Error>;
+    type Error = Box<dyn std::error::Error + Send + Sync + 'static>;
 
     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
         Self::try_from(value.as_ref())
