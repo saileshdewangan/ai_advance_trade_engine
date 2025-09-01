@@ -2,7 +2,7 @@ use crate::order_processor::order_processor::OrderProcessor;
 use crate::redis_utils::Signal;
 use crate::trade_engine::TradeEngine;
 use crate::trade_engine::TradeStatus;
-use crate::types::ExchangeType;
+// use crate::types::ExchangeType;
 use crate::types::TransactionType;
 use crate::websocket::angel_one_websocket::{
     SubscriptionBuilder, SubscriptionExchange, SubscriptionMode,
@@ -517,17 +517,18 @@ impl ClientNode {
                                         && handler.position_type == transaction_type
                                         && handler.trigger_price == trigger_price
                                     {
-                                        handler.trade_status = TradeStatus::Closed;
-                                        handler.exchange_type =
-                                            if handler.exchange_type == ExchangeType::NFO {
-                                                ExchangeType::NFO
-                                            } else {
-                                                ExchangeType::BFO
-                                            };
-                                        handler.symbol_token = String::from("");
-                                        handler.trigger_price = 0.0;
-                                        handler.trading_symbol = String::from("");
-                                        let _ = handler.stop_loss_price - 0.0;
+                                        // handler.trade_status = TradeStatus::Closed;
+                                        // handler.exchange_type =
+                                        //     if handler.exchange_type == ExchangeType::NFO {
+                                        //         ExchangeType::NFO
+                                        //     } else {
+                                        //         ExchangeType::BFO
+                                        //     };
+                                        // handler.symbol_token = String::from("");
+                                        // handler.trigger_price = 0.0;
+                                        // handler.trading_symbol = String::from("");
+                                        // let _ = handler.stop_loss_price - 0.0;
+                                        handler.reset().await;
                                         let _ = tx_main_clone
                                             .send(Signal::UpdateActiveTrades(handler.clone()))
                                             .await;
@@ -753,67 +754,53 @@ impl ClientNode {
                             trade_engine_id,
                             client_id,
                         } => {
-                            let order_clone = order_req.clone();
-                            // let tx_brd = tx_broadcast.clone();
-                            let tx_main_clone = tx_main_clone.clone();
-                            let strategy_clone = strategy.clone(); // Clone strategy outside of the task so it is not moved.
-                            let tx_redis_clone = self.tx_redis.clone();
+                            if client_id == self.client_id {
+                                let order_clone = order_req.clone();
+                                // let tx_brd = tx_broadcast.clone();
+                                let tx_main_clone = tx_main_clone.clone();
+                                let strategy_clone = strategy.clone(); // Clone strategy outside of the task so it is not moved.
+                                let tx_redis_clone = self.tx_redis.clone();
 
-                            // info!(
-                            //     "\n\nOrder clone {:?} client id {:?}",
-                            //     order_clone.clone(),
-                            //     client_id.clone()
-                            // );
-                            println!("\n");
-                            info!(
-                                "Executing -> Engine = {:?} client id = {:?}",
-                                trade_engine_id,
-                                client_id.clone()
-                            );
+                                println!("\n");
+                                info!(
+                                    "Executing -> Engine = {:?} client id = {:?}",
+                                    trade_engine_id,
+                                    client_id.clone()
+                                );
 
-                            if let Some(client_arc) = self.angelone_client.clone() {
-                                let client_arc_clone = client_arc.clone();
-                                let price_hash_clone = price_hashmap.clone();
+                                if let Some(client_arc) = self.angelone_client.clone() {
+                                    let client_arc_clone = client_arc.clone();
+                                    let price_hash_clone = price_hashmap.clone();
 
-                                println!("\n Engines size : {:?}", self.trade_engines.len());
-                                if let Some(engine) = self.trade_engines.get_mut(&trade_engine_id) {
-                                    if engine.trade_status == TradeStatus::Confirming {
-                                        engine.trade_status = TradeStatus::Executing;
+                                    println!("\n Engines size : {:?}", self.trade_engines.len());
+                                    if let Some(engine) =
+                                        self.trade_engines.get_mut(&trade_engine_id)
+                                    {
+                                        if engine.trade_status == TradeStatus::Confirming {
+                                            engine.trade_status = TradeStatus::Executing;
 
-                                        // tx_main_clone
-                                        //     .send(Signal::UpdateActiveTrades(updatable_engine))
-                                        //     .await
-                                        //     .unwrap();
-
-                                        tokio::spawn(async move {
-                                            OrderProcessor::handle_order_placement(
-                                                client_id,
-                                                client_arc_clone,
-                                                order_clone,
-                                                tx_main_clone,
-                                                trade_engine_id,
-                                                strategy_clone,
-                                                tx_redis_clone,
-                                                price_hash_clone,
-                                            )
-                                            .await;
-                                        });
+                                            tokio::spawn(async move {
+                                                OrderProcessor::handle_order_placement(
+                                                    client_id,
+                                                    client_arc_clone,
+                                                    order_clone,
+                                                    tx_main_clone,
+                                                    trade_engine_id,
+                                                    strategy_clone,
+                                                    tx_redis_clone,
+                                                    price_hash_clone,
+                                                )
+                                                .await;
+                                            });
+                                        }
                                     }
+                                } else {
+                                    // error!()
+                                    error!(
+                                        "Client executor not found for client id: {:?}",
+                                        client_id
+                                    );
                                 }
-                                //  else {
-                                //     println!(
-                                //         "\n Engines size : {:?} on Aborted",
-                                //         self.trade_engines.len()
-                                //     );
-
-                                //     error!(
-                                //         "Trade engine Id {} not found. Aborting order execution.",
-                                //         trade_engine_id
-                                //     );
-                                // }
-                            } else {
-                                // error!()
-                                error!("Client executor not found for client id: {:?}", client_id);
                             }
                         }
                         Signal::SquareOffTrade {

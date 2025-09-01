@@ -850,13 +850,12 @@ async fn main() {
     InitializeApp(tx_redis_init).await;
 
     loop {
-        let tx_main_loop = tx_main.clone();
-        // get_instance_id(&auth_token, &redis_client_clone).await;
-        let signal = simulate_price_feed("26000".to_string(), 24400.0, 24600.0);
-        tx_main_loop.send(signal).await;
-        std::thread::sleep(std::time::Duration::from_millis(200));
+        // let tx_main_loop = tx_main.clone();
+        // let signal = simulate_price_feed("26000".to_string(), 24400.0, 24600.0);
+        // tx_main_loop.send(signal).await;
+        // std::thread::sleep(std::time::Duration::from_millis(200));
 
-        // std::thread::sleep(std::time::Duration::from_secs(5));
+        std::thread::sleep(std::time::Duration::from_secs(5));
         // println!("Main function is still running...");
     }
 }

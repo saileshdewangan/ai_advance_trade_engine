@@ -239,6 +239,7 @@ pub struct TradeEngine {
     /// Trade status
     pub trade_status: TradeStatus,
 
+    #[serde(default = "default_trigger_price")]
     /// trigger price when a trade will be executed on algorithm
     pub trigger_price: f32,
 
@@ -376,6 +377,11 @@ fn default_stop_loss_price() -> f32 {
     0.00
 }
 
+// Default trigger price flag
+fn default_trigger_price() -> f32 {
+    0.00
+}
+
 // Default value for position type flag
 fn default_position_type() -> TransactionType {
     TransactionType::BUY
@@ -497,24 +503,15 @@ impl TradeEngine {
 
     /// Checks condition can it accept new trade according to condition or not
     pub fn can_accept_new_trade(&self, strategy: &Strategy) -> bool {
-        // print!(
-        //     "\nStrategy can accept {:?}, Engine id {:?}, status {:?}, executed {:?}, max {:?}, client_id {:?}",
-        //     self.strategy,
-        //     self.trade_engine_id,
-        //     self.trade_status,
-        //     self.executed_trades,
-        //     self.max_trades,
-        //     self.client_id
-        // );
-        if self.client_id != 0 {
-            self.executed_trades < self.max_trades
-                && self.trade_status == TradeStatus::Closed
-                && self.strategy == *strategy
-        } else {
-            self.executed_trades < self.max_trades
-                && self.trade_status == TradeStatus::Closed
-                && self.strategy == *strategy
-        }
+        // if self.client_id != 0 {
+        self.executed_trades < self.max_trades
+            && self.trade_status == TradeStatus::Closed
+            && self.strategy == *strategy
+        // } else {
+        //     self.executed_trades < self.max_trades
+        //         && self.trade_status == TradeStatus::Closed
+        //         && self.strategy == *strategy
+        // }
     }
 
     /// Trailing stop loss function by 5 points
@@ -606,11 +603,13 @@ impl TradeEngine {
 
     /// Disconnect and reset the variants values
     pub async fn disconnect(&mut self) {
-        self.trade_status = TradeStatus::Closed;
-        self.entry_req = None;
-        self.exit_req = None;
-        self.trade_id = 0;
-        self.execution_time = 0
+        // self.trade_status = TradeStatus::Closed;
+        // self.entry_req = None;
+        // self.exit_req = None;
+        // self.trade_id = 0;
+        // self.execution_time = 0;
+        // self.trigger_price = 0.0;
+        self.reset().await;
     }
 
     /// square off trade function to place new order with params
@@ -738,12 +737,25 @@ impl TradeEngine {
     /// Reset the values
     pub async fn reset(&mut self) {
         self.trade_status = TradeStatus::Closed;
-        self.exchange_type = ExchangeType::NFO;
+        // self.exchange_type = ExchangeType::NFO;
+        self.exchange_type = if self.exchange_type == ExchangeType::NFO {
+            ExchangeType::NFO
+        } else {
+            ExchangeType::BFO
+        };
         self.symbol_token = String::from("");
         self.trigger_price = 0.0;
         self.trading_symbol = String::from("");
         self.stop_loss_price = 0.0;
         self.execution_time = 0;
+        self.entry_req = None;
+        self.exit_req = None;
+        self.trade_id = 0;
+        self.target_price = 0.0;
+        self.trade_entry_price = 0.0;
+        self.stop_loss_price = 0.0;
+        self.symbol_token = String::from("");
+        self.trading_symbol = String::from("");
     }
 
     /// Compares the execution_time in this MyData struct with the current time.
