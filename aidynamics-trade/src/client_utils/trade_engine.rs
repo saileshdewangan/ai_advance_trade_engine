@@ -35,6 +35,9 @@ pub enum TradeStatus {
     /// Variant to prevent multiple times execution of function
     /// When backpressure is high
     Executing = 6,
+    /// Variant to prevent multiple times square off
+    /// When backpressure is high
+    SquaringOff = 7,
 }
 
 /// Enum engine status
@@ -133,7 +136,7 @@ impl TradeRes {
 /// over trade execution and risk management.
 pub struct TradeEngineUpdates {
     /// Specifies the type of transaction (e.g., `Buy` or `Sell`) to be executed.
-    #[serde(rename = "transactiontype")]
+    #[serde(rename = "transaction_type")]
     pub transaction_type: TransactionType,
 
     /// Sets the maximum number of trades allowed for the current session or strategy.
@@ -515,42 +518,84 @@ impl TradeEngine {
     }
 
     /// Trailing stop loss function by 5 points
+    // pub fn trail_stop_loss(&mut self, current_price: f32) {
+    //     if self.transaction_type == TransactionType::BUY {
+    //         let diff = current_price - self.trade_entry_price;
+    //         let sl_gap = self.trade_entry_price - self.stop_loss_price;
+
+    //         if diff >= sl_gap {
+    //             // how many 5-point steps are crossed
+    //             let steps = ((diff - sl_gap) / 5.0).floor();
+    //             let new_stop = self.stop_loss_price + steps * 5.0;
+
+    //             if new_stop > self.stop_loss_price {
+    //                 self.stop_loss_price = new_stop;
+    //                 println!(
+    //                     "\nBUY Trailing stop loss updated to {}",
+    //                     self.stop_loss_price
+    //                 );
+    //             }
+    //         }
+    //     } else if self.transaction_type == TransactionType::SELL {
+    //         let diff = self.trade_entry_price - current_price;
+    //         let sl_gap = self.stop_loss_price - self.trade_entry_price;
+
+    //         if diff >= sl_gap {
+    //             let steps = ((diff - sl_gap) / 5.0).floor();
+    //             let new_stop = self.stop_loss_price - steps * 5.0;
+
+    //             if new_stop < self.stop_loss_price {
+    //                 self.stop_loss_price = new_stop;
+    //                 println!(
+    //                     "\nSELL Trailing stop loss updated to {}",
+    //                     self.stop_loss_price
+    //                 );
+    //             }
+    //         }
+    //     }
+    // }
+
     pub fn trail_stop_loss(&mut self, current_price: f32) {
-        if self.transaction_type == TransactionType::BUY {
-            let diff = current_price - self.trade_entry_price;
-            let sl_gap = self.trade_entry_price - self.stop_loss_price;
+    if self.transaction_type == TransactionType::BUY {
+        let gap = self.trade_entry_price - self.stop_loss_price;
 
-            if diff >= sl_gap {
-                // how many 5-point steps are crossed
-                let steps = ((diff - sl_gap) / 5.0).floor();
-                let new_stop = self.stop_loss_price + steps * 5.0;
+        if current_price >= self.trade_entry_price + gap {
+            // base stop loss is entry price
+            let mut new_stop = self.trade_entry_price;
 
-                if new_stop > self.stop_loss_price {
-                    self.stop_loss_price = new_stop;
-                    println!(
-                        "\nBUY Trailing stop loss updated to {}",
-                        self.stop_loss_price
-                    );
-                }
+            // calculate how many 5-point increments above entry+gap
+            let extra_steps = ((current_price - (self.trade_entry_price + gap)) / 5.0).floor();
+
+            if extra_steps > 0.0 {
+                new_stop += extra_steps * 5.0;
             }
-        } else if self.transaction_type == TransactionType::SELL {
-            let diff = self.trade_entry_price - current_price;
-            let sl_gap = self.stop_loss_price - self.trade_entry_price;
 
-            if diff >= sl_gap {
-                let steps = ((diff - sl_gap) / 5.0).floor();
-                let new_stop = self.stop_loss_price - steps * 5.0;
+            if new_stop > self.stop_loss_price {
+                self.stop_loss_price = new_stop;
+                println!("\nBUY Trailing stop loss updated to {}", self.stop_loss_price);
+            }
+        }
+    } else if self.transaction_type == TransactionType::SELL {
+        let gap = self.stop_loss_price - self.trade_entry_price;
 
-                if new_stop < self.stop_loss_price {
-                    self.stop_loss_price = new_stop;
-                    println!(
-                        "\nSELL Trailing stop loss updated to {}",
-                        self.stop_loss_price
-                    );
-                }
+        if current_price <= self.trade_entry_price - gap {
+            // base stop loss is entry price
+            let mut new_stop = self.trade_entry_price;
+
+            // calculate how many 5-point increments below entry-gap
+            let extra_steps = (((self.trade_entry_price - gap) - current_price) / 5.0).floor();
+
+            if extra_steps > 0.0 {
+                new_stop -= extra_steps * 5.0;
+            }
+
+            if new_stop < self.stop_loss_price {
+                self.stop_loss_price = new_stop;
+                println!("\nSELL Trailing stop loss updated to {}", self.stop_loss_price);
             }
         }
     }
+}
 
     /// Update variants on new trade open
     pub async fn update_from(&mut self, other: &NewTrade) {

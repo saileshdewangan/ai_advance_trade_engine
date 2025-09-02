@@ -567,12 +567,12 @@ impl ClientNode {
                             // // let tx_broadcast = self.tx_broadcast.clone();
                             // let active_trade_ids = self.active_trade_ids.clone();
 
-                            let mut trade_handlers_map: HashMap<u32, TradeEngine> = HashMap::new();
-                            for id in self.active_trade_ids.clone() {
-                                if let Some(handler) = self.trade_engines.get(&id) {
-                                    trade_handlers_map.insert(id, handler.clone());
-                                }
-                            }
+                            // let mut trade_handlers_map: HashMap<u32, TradeEngine> = HashMap::new();
+                            // for id in self.active_trade_ids.clone() {
+                            //     if let Some(handler) = self.trade_engines.get(&id) {
+                            //         trade_handlers_map.insert(id, handler.clone());
+                            //     }
+                            // }
                             println!("\n");
                             info!(
                                 "\nSquared Off Active handlers Client id = {:?} : {:?}",
@@ -580,8 +580,7 @@ impl ClientNode {
                                 self.active_trade_ids.len()
                             );
 
-                            // tokio::spawn(async move {
-                            for (_, handler) in trade_handlers_map.iter_mut() {
+                            for (_, handler) in self.trade_engines.iter_mut() {
                                 if handler.trade_status == TradeStatus::Open
                                     && handler.symbol == symbol
                                     && handler.strategy == strategy
@@ -591,22 +590,20 @@ impl ClientNode {
                                     info!("\nForce {:?}", handler);
                                     if let Some(_req) = &handler.exit_req {
                                         // found = true;
-                                        let tx_main_new = tx_main_clone.clone();
-                                        let _ = tx_main_new
-                                            .send(Signal::UpdateTradeStatus {
-                                                trade_engine_id: handler.trade_engine_id,
-                                                status: TradeStatus::AwaitingConfirmation,
-                                            })
-                                            .await;
-
+                                        // let tx_main_new = tx_main_clone.clone();
+                                        // let _ = tx_main_new
+                                        //     .send(Signal::UpdateTradeStatus {
+                                        //         trade_engine_id: handler.trade_engine_id,
+                                        //         status: TradeStatus::AwaitingConfirmation,
+                                        //     })
+                                        //     .await;
+                                        handler.trade_status = TradeStatus::AwaitingConfirmation;
                                         handler
                                             .squareoff_trade(Arc::new(self.tx_main.clone()), false)
                                             .await;
                                     }
                                 }
                             }
-                            // });
-                            // }
                         }
                         Signal::SquareOffReject {
                             trade_id: _,
@@ -616,8 +613,11 @@ impl ClientNode {
                         } => {
                             if let Some(handler) = self.trade_engines.get_mut(&trade_engine_id) {
                                 if handler.trade_status == TradeStatus::AwaitingConfirmation
-                                // && handler.strategy == self.strategy_to_process
+                                    || handler.trade_status == TradeStatus::SquaringOff
+                                    || handler.trade_status == TradeStatus::Triggered
                                 {
+                                    // && handler.strategy == self.strategy_to_process
+
                                     handler.trade_status = TradeStatus::Open;
                                     error!(
                                         "Square Off Rejection -> error : {:?}, message : {:?}",
@@ -634,6 +634,8 @@ impl ClientNode {
                         } => {
                             if let Some(handler) = self.trade_engines.get_mut(&trade_engine_id) {
                                 if handler.trade_status == TradeStatus::AwaitingConfirmation
+                                    || handler.trade_status == TradeStatus::SquaringOff
+                                    || handler.trade_status == TradeStatus::Triggered
                                 // && handler.strategy == self.strategy_to_process
                                 {
                                     handler.trade_status = TradeStatus::Open;
@@ -818,21 +820,28 @@ impl ClientNode {
                             if let Some(client_arc) = self.angelone_client.clone() {
                                 let client_arc_clone = client_arc.clone();
                                 let price_hashmap_clone = price_hashmap.clone();
-                                tokio::spawn(async move {
-                                    OrderProcessor::handle_squareoff_placement(
-                                        client_id,
-                                        client_arc_clone,
-                                        order_req,
-                                        tx_main_clone.clone(),
-                                        trade_engine_id,
-                                        trade_id,
-                                        strategy,
-                                        remove_trade_engine,
-                                        tx_redis_clone,
-                                        price_hashmap_clone,
-                                    )
-                                    .await;
-                                });
+                                if let Some(engine) = self.trade_engines.get_mut(&trade_engine_id) {
+                                    if engine.trade_status == TradeStatus::Triggered
+                                        || engine.trade_status == TradeStatus::AwaitingConfirmation
+                                    {
+                                        engine.trade_status = TradeStatus::SquaringOff;
+                                        tokio::spawn(async move {
+                                            OrderProcessor::handle_squareoff_placement(
+                                                client_id,
+                                                client_arc_clone,
+                                                order_req,
+                                                tx_main_clone.clone(),
+                                                trade_engine_id,
+                                                trade_id,
+                                                strategy,
+                                                remove_trade_engine,
+                                                tx_redis_clone,
+                                                price_hashmap_clone,
+                                            )
+                                            .await;
+                                        });
+                                    }
+                                }
                             } else {
                                 eprintln!(
                                     "Client not found for client id: {:?} Square Off",
@@ -919,7 +928,8 @@ impl ClientNode {
                             if let Some(t_eng_id) = self.active_trade_ids.get(&trade_engine_id) {
                                 if let Some(handler) = self.trade_engines.get_mut(t_eng_id) {
                                     if (handler.trade_status == TradeStatus::AwaitingConfirmation
-                                        || handler.trade_status == TradeStatus::Triggered)
+                                        || handler.trade_status == TradeStatus::Triggered
+                                        || handler.trade_status == TradeStatus::SquaringOff)
                                         && handler.trade_id == trade_id
                                     // && handler.strategy == self.strategy_to_process
                                     {

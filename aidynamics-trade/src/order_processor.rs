@@ -386,7 +386,8 @@ pub mod order_processor {
                                 }))
                                 .await;
                         }
-
+                        // Sleep for 3 seconds before removing trade engine to ensure all processes are complete
+                        sleep(Duration::from_millis(3000));
                         if remove_trade_engine {
                             let _ = tx_main_clone
                                 .send(Signal::RemoveTradeEngine(trade_engine_id))
