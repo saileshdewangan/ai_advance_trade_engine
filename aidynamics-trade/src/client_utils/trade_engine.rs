@@ -292,8 +292,21 @@ pub struct TradeEngine {
     pub execution_time: i64,
 
     /// Is margin available
-    #[serde(default = "default_margin")]
-    pub margin: i32,
+    // #[serde(default = "default_margin")]
+    // pub margin: i32,
+
+    /// Client code to identify the angelone client
+    #[serde(default = "default_client_code")]
+    pub client_code: String,
+
+    /// unique order id to identify order.
+    /// This will be set after order placement
+    #[serde(default = "default_unique_order_id")]
+    pub unique_order_id: Option<String>,
+
+    /// This will be set after order placement
+    #[serde(default = "default_remove_trade_engine")]
+    pub remove_trade_engine: bool,
 }
 
 /// Struct to hold information received from server to open new trade
@@ -336,11 +349,20 @@ pub struct NewTrade {
 
     /// Trade status to initialize
     pub trade_status: TradeStatus,
+
+    /// set true when engine is to be removed after square off
+    #[serde(default = "default_remove_trade_engine")]
+    pub remove_trade_engine: bool,
 }
 
 // Default value provider for `trading_symbol`
 fn default_trading_symbol() -> String {
     String::from("")
+}
+
+// Default value provider for `remove_trade_engine`
+fn default_remove_trade_engine() -> bool {
+    false
 }
 
 // Default value provider for `symbol_token`
@@ -394,6 +416,14 @@ fn default_execution_time() -> i64 {
     Utc::now().timestamp()
 }
 
+fn default_client_code() -> String {
+    String::from("")
+}
+
+fn default_unique_order_id() -> Option<String> {
+    None
+}
+
 fn default_margin() -> i32 {
     0
 }
@@ -429,7 +459,9 @@ impl Default for TradeEngine {
             transaction_type: TransactionType::BUY,
             position_type: TransactionType::BUY,
             execution_time: 0,
-            margin: 0,
+            unique_order_id: None,
+            client_code: "".to_string(),
+            remove_trade_engine: false,
         }
     }
 }
@@ -556,46 +588,52 @@ impl TradeEngine {
     // }
 
     pub fn trail_stop_loss(&mut self, current_price: f32) {
-    if self.transaction_type == TransactionType::BUY {
-        let gap = self.trade_entry_price - self.stop_loss_price;
+        if self.transaction_type == TransactionType::BUY {
+            let gap = self.trade_entry_price - self.stop_loss_price;
 
-        if current_price >= self.trade_entry_price + gap {
-            // base stop loss is entry price
-            let mut new_stop = self.trade_entry_price;
+            if current_price >= self.trade_entry_price + gap {
+                // base stop loss is entry price
+                let mut new_stop = self.trade_entry_price;
 
-            // calculate how many 5-point increments above entry+gap
-            let extra_steps = ((current_price - (self.trade_entry_price + gap)) / 5.0).floor();
+                // calculate how many 5-point increments above entry+gap
+                let extra_steps = ((current_price - (self.trade_entry_price + gap)) / 5.0).floor();
 
-            if extra_steps > 0.0 {
-                new_stop += extra_steps * 5.0;
+                if extra_steps > 0.0 {
+                    new_stop += extra_steps * 5.0;
+                }
+
+                if new_stop > self.stop_loss_price {
+                    self.stop_loss_price = new_stop;
+                    println!(
+                        "\nBUY Trailing stop loss updated to {}",
+                        self.stop_loss_price
+                    );
+                }
             }
+        } else if self.transaction_type == TransactionType::SELL {
+            let gap = self.stop_loss_price - self.trade_entry_price;
 
-            if new_stop > self.stop_loss_price {
-                self.stop_loss_price = new_stop;
-                println!("\nBUY Trailing stop loss updated to {}", self.stop_loss_price);
-            }
-        }
-    } else if self.transaction_type == TransactionType::SELL {
-        let gap = self.stop_loss_price - self.trade_entry_price;
+            if current_price <= self.trade_entry_price - gap {
+                // base stop loss is entry price
+                let mut new_stop = self.trade_entry_price;
 
-        if current_price <= self.trade_entry_price - gap {
-            // base stop loss is entry price
-            let mut new_stop = self.trade_entry_price;
+                // calculate how many 5-point increments below entry-gap
+                let extra_steps = (((self.trade_entry_price - gap) - current_price) / 5.0).floor();
 
-            // calculate how many 5-point increments below entry-gap
-            let extra_steps = (((self.trade_entry_price - gap) - current_price) / 5.0).floor();
+                if extra_steps > 0.0 {
+                    new_stop -= extra_steps * 5.0;
+                }
 
-            if extra_steps > 0.0 {
-                new_stop -= extra_steps * 5.0;
-            }
-
-            if new_stop < self.stop_loss_price {
-                self.stop_loss_price = new_stop;
-                println!("\nSELL Trailing stop loss updated to {}", self.stop_loss_price);
+                if new_stop < self.stop_loss_price {
+                    self.stop_loss_price = new_stop;
+                    println!(
+                        "\nSELL Trailing stop loss updated to {}",
+                        self.stop_loss_price
+                    );
+                }
             }
         }
     }
-}
 
     /// Update variants on new trade open
     pub async fn update_from(&mut self, other: &NewTrade) {
@@ -737,6 +775,12 @@ impl TradeEngine {
         //     .product_type(ProductType::IntraDay);
         // self.entry_req = Some(entry_req);
 
+        // clientid-engineid-strategy-open position-trade_id
+        let order_tag = format!(
+            "{}-{}-{:?}-{}-{}",
+            self.client_id, self.trade_engine_id, self.strategy, "o", ""
+        );
+
         let entry_req = PlaceOrderReq::new(
             self.trading_symbol.clone(),
             self.symbol_token.clone(),
@@ -744,7 +788,8 @@ impl TradeEngine {
         )
         .exchange(self.exchange_type)
         .quantity(self.quantity)
-        .product_type(ProductType::IntraDay);
+        .product_type(ProductType::IntraDay)
+        .order_tag(order_tag);
         self.entry_req = Some(entry_req);
     }
 
@@ -764,6 +809,12 @@ impl TradeEngine {
         // .product_type(ProductType::IntraDay);
         // self.exit_req = Some(exit_req);
 
+        // clientid-engineid-strategy-close position-trade_id
+        let order_tag = format!(
+            "{}-{}-{:?}-{}-{}",
+            self.client_id, self.trade_engine_id, self.strategy, "c", self.trade_id
+        );
+
         let exit_req = PlaceOrderReq::new(
             self.trading_symbol.clone(),
             self.symbol_token.clone(),
@@ -775,7 +826,8 @@ impl TradeEngine {
         )
         .exchange(self.exchange_type)
         .quantity(self.quantity)
-        .product_type(ProductType::IntraDay);
+        .product_type(ProductType::IntraDay)
+        .order_tag(order_tag);
         self.exit_req = Some(exit_req);
     }
 
@@ -801,6 +853,8 @@ impl TradeEngine {
         self.stop_loss_price = 0.0;
         self.symbol_token = String::from("");
         self.trading_symbol = String::from("");
+        self.unique_order_id = None;
+        self.remove_trade_engine = false;
     }
 
     /// Compares the execution_time in this MyData struct with the current time.

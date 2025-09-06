@@ -660,6 +660,13 @@ impl ClientNode {
                                 }
                             }
                         }
+                        Signal::SetUniqueOrderId(trade_engine_id, order_id) => {
+                            for (_, handler) in self.trade_engines.iter_mut() {
+                                if handler.trade_engine_id == trade_engine_id {
+                                    handler.unique_order_id = Some(order_id.clone());
+                                }
+                            }
+                        }
                         Signal::NewTradeEngine(engine) => {
                             let mut code_should_run = true;
                             if let Some(handler) = self
@@ -937,7 +944,15 @@ impl ClientNode {
                                             .send(Signal::DeleteActiveTradeIds(*t_eng_id))
                                             .await
                                             .unwrap();
-                                        handler.reset().await;
+                                        let remove_now = handler.remove_trade_engine.clone();
+                                        if remove_now {
+                                            handler.reset().await;
+                                            let _ = tx_main_clone
+                                                .send(Signal::RemoveTradeEngine(*t_eng_id))
+                                                .await;
+                                        } else {
+                                            handler.reset().await;
+                                        }
                                     }
                                 }
                             }

@@ -126,4 +126,14 @@ pub trait OrderSetter {
         self.inner_mut().disclosed_quantity = quantity.to_string();
         self
     }
+
+    /// Sets the order tag for the order placement
+    fn order_tag<Q>(mut self, order_tag: Q) -> Self
+    where
+        Q: Display,
+        Self: Sized,
+    {
+        self.inner_mut().order_tag = order_tag.to_string();
+        self
+    }
 }

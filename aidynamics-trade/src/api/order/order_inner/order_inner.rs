@@ -45,6 +45,9 @@ pub struct OrderInner {
     /// Quantity to transact
     #[serde(rename = "quantity")]
     pub quantity: String,
+    /// Order tag to identify the order
+    #[serde(rename = "ordertag")]
+    pub order_tag: String,
 }
 
 impl OrderInner {
@@ -71,6 +74,7 @@ impl OrderInner {
             trailing_stop_loss: None,
             disclosed_quantity: String::from("0"),
             quantity: String::from("0"),
+            order_tag: String::from(""),
         }
     }
 }

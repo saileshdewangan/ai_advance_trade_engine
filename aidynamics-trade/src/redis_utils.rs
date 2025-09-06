@@ -93,6 +93,13 @@ pub enum Signal {
     #[serde(rename = "new_trade_engine")]
     NewTradeEngine(TradeEngine),
 
+    /// Set current unique_order_id of this trade engine
+    #[serde(rename = "set_unique_order_id")]
+    SetUniqueOrderId(u32, String),
+
+    #[serde(rename = "set_remove_trade_engine")]
+    SetRemoveTradeEngine(u32),
+
     /// Add Trade engine with configuration when new status of setup is updated
     #[serde(rename = "add_trade_engine")]
     AddTradeEngine {
