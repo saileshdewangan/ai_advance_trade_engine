@@ -442,6 +442,20 @@ impl ClientNode {
                                     handler.prepare_exit_req().await;
                                     handler.execution_time = Utc::now().timestamp();
                                     self.active_trade_ids.insert(resp.trade_engine_id);
+                                    if handler.client_id != 0 {
+                                        self.tx_redis
+                                            .send(Signal::UpdateUniqueOrderId {
+                                                position_type: 1,
+                                                trade_id: handler.trade_id,
+                                                order_id: resp.order_id.to_string(),
+                                                unique_order_id: handler
+                                                    .unique_order_id
+                                                    .clone()
+                                                    .unwrap(),
+                                            })
+                                            .await
+                                            .unwrap();
+                                    }
                                 }
                             }
                             // }
@@ -931,6 +945,7 @@ impl ClientNode {
                             trade_id,
                             strategy: _,
                             trade_engine_id,
+                            order_id,
                         } => {
                             if let Some(t_eng_id) = self.active_trade_ids.get(&trade_engine_id) {
                                 if let Some(handler) = self.trade_engines.get_mut(t_eng_id) {
@@ -940,6 +955,21 @@ impl ClientNode {
                                         && handler.trade_id == trade_id
                                     // && handler.strategy == self.strategy_to_process
                                     {
+                                        if handler.client_id != 0 {
+                                            self.tx_redis
+                                                .send(Signal::UpdateUniqueOrderId {
+                                                    position_type: 0,
+                                                    trade_id: handler.trade_id,
+                                                    order_id: order_id,
+                                                    unique_order_id: handler
+                                                        .unique_order_id
+                                                        .clone()
+                                                        .unwrap(),
+                                                })
+                                                .await
+                                                .unwrap();
+                                        }
+
                                         tx_main_clone
                                             .send(Signal::DeleteActiveTradeIds(*t_eng_id))
                                             .await

@@ -103,11 +103,19 @@ pub struct TradeRes {
 
     /// To identify which stategy is processing
     pub strategy: Strategy,
+
+    /// To identify which stategy is processing
+    pub order_id: u32,
 }
 
 impl TradeRes {
     /// Build trade engine from data provided
-    pub fn from_data(data: &Value, trade_engine_id: u32, strategy: Strategy) -> Option<TradeRes> {
+    pub fn from_data(
+        data: &Value,
+        trade_engine_id: u32,
+        strategy: Strategy,
+        order_id: u32,
+    ) -> Option<TradeRes> {
         if let (Some(trade_id), Some(price)) = (
             data.get("trade_id").and_then(|v| v.as_u64()),
             data.get("price").and_then(|v| v.as_f64()),
@@ -117,6 +125,7 @@ impl TradeRes {
                 trade_id: trade_id as u32,
                 price: price as f32,
                 strategy,
+                order_id,
             })
         } else {
             None
@@ -295,10 +304,6 @@ pub struct TradeEngine {
     // #[serde(default = "default_margin")]
     // pub margin: i32,
 
-    /// Client code to identify the angelone client
-    #[serde(default = "default_client_code")]
-    pub client_code: String,
-
     /// unique order id to identify order.
     /// This will be set after order placement
     #[serde(default = "default_unique_order_id")]
@@ -416,16 +421,12 @@ fn default_execution_time() -> i64 {
     Utc::now().timestamp()
 }
 
-fn default_client_code() -> String {
-    String::from("")
-}
-
 fn default_unique_order_id() -> Option<String> {
     None
 }
 
-fn default_margin() -> i32 {
-    0
+fn default_order_id() -> Option<String> {
+    None
 }
 
 impl Default for TradeEngine {
@@ -460,7 +461,6 @@ impl Default for TradeEngine {
             position_type: TransactionType::BUY,
             execution_time: 0,
             unique_order_id: None,
-            client_code: "".to_string(),
             remove_trade_engine: false,
         }
     }

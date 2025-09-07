@@ -314,6 +314,7 @@ pub mod order_processor {
                             trade_id: 0,
                             price: 0.0,
                             strategy: strategy.clone(),
+                            order_id: 0,
                         }))
                         .await
                         .unwrap();
