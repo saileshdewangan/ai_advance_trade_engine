@@ -105,7 +105,7 @@ pub struct TradeRes {
     pub strategy: Strategy,
 
     /// To identify which stategy is processing
-    pub order_id: u32,
+    pub order_id: String,
 }
 
 impl TradeRes {
@@ -114,7 +114,7 @@ impl TradeRes {
         data: &Value,
         trade_engine_id: u32,
         strategy: Strategy,
-        order_id: u32,
+        order_id: String,
     ) -> Option<TradeRes> {
         if let (Some(trade_id), Some(price)) = (
             data.get("trade_id").and_then(|v| v.as_u64()),
@@ -587,16 +587,65 @@ impl TradeEngine {
     //     }
     // }
 
+    // pub fn trail_stop_loss(&mut self, current_price: f32) {
+    //     if self.transaction_type == TransactionType::BUY {
+    //         let gap = self.trade_entry_price - self.stop_loss_price;
+
+    //         if current_price >= self.trade_entry_price + gap {
+    //             // base stop loss is entry price
+    //             let mut new_stop = self.trade_entry_price;
+
+    //             // calculate how many 5-point increments above entry+gap
+    //             let extra_steps = ((current_price - (self.trade_entry_price + gap)) / 5.0).floor();
+
+    //             if extra_steps > 0.0 {
+    //                 new_stop += extra_steps * 5.0;
+    //             }
+
+    //             if new_stop > self.stop_loss_price {
+    //                 self.stop_loss_price = new_stop;
+    //                 println!(
+    //                     "\nBUY Trailing stop loss updated to {}",
+    //                     self.stop_loss_price
+    //                 );
+    //             }
+    //         }
+    //     } else if self.transaction_type == TransactionType::SELL {
+    //         let gap = self.stop_loss_price - self.trade_entry_price;
+
+    //         if current_price <= self.trade_entry_price - gap {
+    //             // base stop loss is entry price
+    //             let mut new_stop = self.trade_entry_price;
+
+    //             // calculate how many 5-point increments below entry-gap
+    //             let extra_steps = (((self.trade_entry_price - gap) - current_price) / 5.0).floor();
+
+    //             if extra_steps > 0.0 {
+    //                 new_stop -= extra_steps * 5.0;
+    //             }
+
+    //             if new_stop < self.stop_loss_price {
+    //                 self.stop_loss_price = new_stop;
+    //                 println!(
+    //                     "\nSELL Trailing stop loss updated to {}",
+    //                     self.stop_loss_price
+    //                 );
+    //             }
+    //         }
+    //     }
+    // }
+
     pub fn trail_stop_loss(&mut self, current_price: f32) {
         if self.transaction_type == TransactionType::BUY {
-            let gap = self.trade_entry_price - self.stop_loss_price;
+            let gap = self.trade_entry_price - self.stop_loss_price; // 30 here
 
-            if current_price >= self.trade_entry_price + gap {
-                // base stop loss is entry price
+            let trigger_level = self.trade_entry_price + gap; // 130 here
+            if current_price >= trigger_level {
+                // Base stop loss is entry price (100)
                 let mut new_stop = self.trade_entry_price;
 
-                // calculate how many 5-point increments above entry+gap
-                let extra_steps = ((current_price - (self.trade_entry_price + gap)) / 5.0).floor();
+                // From trigger_level upward, count 5-point steps
+                let extra_steps = ((current_price - trigger_level) / 5.0).floor();
 
                 if extra_steps > 0.0 {
                     new_stop += extra_steps * 5.0;
@@ -613,12 +662,12 @@ impl TradeEngine {
         } else if self.transaction_type == TransactionType::SELL {
             let gap = self.stop_loss_price - self.trade_entry_price;
 
-            if current_price <= self.trade_entry_price - gap {
-                // base stop loss is entry price
+            let trigger_level = self.trade_entry_price - gap;
+            if current_price <= trigger_level {
+                // Base stop loss is entry price
                 let mut new_stop = self.trade_entry_price;
 
-                // calculate how many 5-point increments below entry-gap
-                let extra_steps = (((self.trade_entry_price - gap) - current_price) / 5.0).floor();
+                let extra_steps = ((trigger_level - current_price) / 5.0).floor();
 
                 if extra_steps > 0.0 {
                     new_stop -= extra_steps * 5.0;
@@ -775,11 +824,12 @@ impl TradeEngine {
         //     .product_type(ProductType::IntraDay);
         // self.entry_req = Some(entry_req);
 
-        // clientid-engineid-strategy-open position-trade_id
+        // clientid-engineid-strategy-trade_id
         let order_tag = format!(
-            "{}-{}-{:?}-{}-{}",
-            self.client_id, self.trade_engine_id, self.strategy, "o", ""
+            "{}-{}",
+            self.trade_engine_id,""
         );
+        println!("\nOrder tag for entry: {}", order_tag);
 
         let entry_req = PlaceOrderReq::new(
             self.trading_symbol.clone(),
@@ -811,9 +861,11 @@ impl TradeEngine {
 
         // clientid-engineid-strategy-close position-trade_id
         let order_tag = format!(
-            "{}-{}-{:?}-{}-{}",
-            self.client_id, self.trade_engine_id, self.strategy, "c", self.trade_id
+            "{}-{}",
+            self.trade_engine_id, self.trade_id
         );
+
+        println!("\nOrder tag for exit: {}", order_tag);
 
         let exit_req = PlaceOrderReq::new(
             self.trading_symbol.clone(),
