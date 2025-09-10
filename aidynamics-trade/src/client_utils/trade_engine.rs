@@ -825,10 +825,7 @@ impl TradeEngine {
         // self.entry_req = Some(entry_req);
 
         // clientid-engineid-strategy-trade_id
-        let order_tag = format!(
-            "{}-{}",
-            self.trade_engine_id,""
-        );
+        let order_tag = format!("{}-{}", self.trade_engine_id, "0");
         println!("\nOrder tag for entry: {}", order_tag);
 
         let entry_req = PlaceOrderReq::new(
@@ -860,10 +857,7 @@ impl TradeEngine {
         // self.exit_req = Some(exit_req);
 
         // clientid-engineid-strategy-close position-trade_id
-        let order_tag = format!(
-            "{}-{}",
-            self.trade_engine_id, self.trade_id
-        );
+        let order_tag = format!("{}-{}", self.trade_engine_id, self.trade_id);
 
         println!("\nOrder tag for exit: {}", order_tag);
 

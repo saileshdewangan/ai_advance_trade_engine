@@ -510,12 +510,21 @@ pub mod order_processor {
             // info!("Order == {:?}", order_clone);
             if client_id == 0 {
                 let mut ltp: f64 = 0.0;
-                match price_hasmap.get(&order_clone.inner.symbol_token) {
-                    Some(price) => {
-                        ltp = *price as f64;
-                    }
-                    None => {
-                        tracing::error!("Error fetching LTP data from hashmap");
+                let mut times = 0;
+                loop {
+                    match price_hasmap.get(&order_clone.inner.symbol_token) {
+                        Some(price) => {
+                            ltp = *price as f64;
+                            break;
+                        }
+                        None => {
+                            tracing::error!("Error fetching LTP data from hashmap");
+                            sleep(Duration::from_millis(500));
+                            times += 1;
+                            if times == 3 {
+                                break;
+                            }
+                        }
                     }
                 }
 
