@@ -219,7 +219,7 @@ impl ClientNode {
                                                         // );
 
                                                         // COMMENTED DUE TO WRONG CALCULATION
-                                                        // handler.trail_stop_loss(ltp);
+                                                        handler.trail_stop_loss(ltp);
 
                                                         if ltp <= handler.stop_loss_price
                                                             || ltp >= handler.target_price
@@ -239,12 +239,11 @@ impl ClientNode {
                                                             info!("\n\nBuy square off trade");
                                                         }
                                                     } else {
-                                                        
                                                         println!("\n");
                                                         info!("Entry Price {},SL price = {}, Target price = {}, LTP = {}",handler.trade_entry_price, handler.stop_loss_price, handler.target_price, ltp);
-                                                        
+
                                                         // COMMENTED DUE TO WRONG CALCULATION
-                                                        // handler.trail_stop_loss(ltp);
+                                                        handler.trail_stop_loss(ltp);
 
                                                         if ltp >= handler.stop_loss_price
                                                             || ltp <= handler.target_price
