@@ -236,24 +236,42 @@ pub mod order_processor {
             trade_engine_id: u32,
             strategy: Strategy,
             tx_redis: Sender<Signal>,
-            price_hasmap: HashMap<String, f32>,
+            // price_hasmap: HashMap<String, f32>,
         ) {
             let order_clone = order_req.clone();
             println!("\nClient id found {:?}, strategy {:?}", client_id, strategy);
             if client_id == 0 {
+                // let mut ltp: f64 = 0.0;
+
+                // match price_hasmap.get(&order_clone.inner.symbol_token) {
+                //     Some(price) => {
+                //         ltp = *price as f64;
+                //     }
+                //     None => {
+                //         tracing::error!("Error fetching LTP data from hashmap");
+                //     }
+                // }
+
+                // // let ltp = client_arc_clone.ltp_data(&ltp_data_req).await.unwrap();
+                // let ltp_price = ltp as f32;
+
                 let mut ltp: f64 = 0.0;
 
-                match price_hasmap.get(&order_clone.inner.symbol_token) {
-                    Some(price) => {
-                        ltp = *price as f64;
+                let ltp_data_req = LtpDataReq {
+                    exchange: order_clone.inner.exchange,
+                    trading_symbol: order_clone.clone().inner.trading_symbol,
+                    symbol_token: order_clone.inner.symbol_token.clone(),
+                };
+                match client_arc_clone.ltp_data(&ltp_data_req).await {
+                    Ok(ltp_data) => {
+                        ltp = ltp_data.ltp;
                     }
-                    None => {
-                        tracing::error!("Error fetching LTP data from hashmap");
+                    Err(e) => {
+                        tracing::error!("Error fetching LTP data: {:?}", e);
+                        // tx_redis.send(Signal::Error(e)).await.unwrap();
+                        // return;
                     }
                 }
-
-                // let ltp = client_arc_clone.ltp_data(&ltp_data_req).await.unwrap();
-                let ltp_price = ltp as f32;
 
                 let quantity_result = usize::from_str(&order_clone.inner.quantity);
 
@@ -262,7 +280,7 @@ pub mod order_processor {
                     ProductType::IntraDay,
                     order_clone.transaction_type,
                     &order_clone.inner.symbol_token,
-                    ltp_price,
+                    ltp as f32,
                     quantity_result.unwrap(),
                 );
 
@@ -285,7 +303,7 @@ pub mod order_processor {
                         client_id,
                         trade_engine_id,
                         order_req: order_req.clone(),
-                        price: ltp_price as f32,
+                        price: ltp as f32,
                         margin_required: margin_required as f32,
                     })
                     .await
@@ -498,7 +516,7 @@ pub mod order_processor {
             strategy: Strategy,
             remove_trade_engine: bool,
             tx_redis: Sender<Signal>,
-            price_hasmap: HashMap<String, f32>,
+            // price_hasmap: HashMap<String, f32>,
         ) {
             if remove_trade_engine {
                 tx_main_clone
@@ -509,24 +527,52 @@ pub mod order_processor {
             let order_clone = order_req.clone();
             // info!("Order == {:?}", order_clone);
             if client_id == 0 {
+                // let mut times = 0;
+                // loop {
+                //     match price_hasmap.get(&order_clone.inner.symbol_token) {
+                //         Some(price) => {
+                //             ltp = *price as f64;
+                //             break;
+                //         }
+                //         None => {
+                //             tracing::error!("Error fetching LTP data from hashmap");
+                //             sleep(Duration::from_millis(500));
+                //             times += 1;
+                //             if times == 3 {
+                //                 break;
+                //             }
+                //         }
+                //     }
+                // }
+
                 let mut ltp: f64 = 0.0;
-                let mut times = 0;
-                loop {
-                    match price_hasmap.get(&order_clone.inner.symbol_token) {
-                        Some(price) => {
-                            ltp = *price as f64;
-                            break;
-                        }
-                        None => {
-                            tracing::error!("Error fetching LTP data from hashmap");
-                            sleep(Duration::from_millis(500));
-                            times += 1;
-                            if times == 3 {
-                                break;
-                            }
-                        }
+
+                let ltp_data_req = LtpDataReq {
+                    exchange: order_clone.inner.exchange,
+                    trading_symbol: order_clone.clone().inner.trading_symbol,
+                    symbol_token: order_clone.inner.symbol_token.clone(),
+                };
+                // let ltp = client_arc_clone.ltp_data(&ltp_data_req).await.unwrap();
+
+                match client_arc_clone.ltp_data(&ltp_data_req).await {
+                    Ok(ltp_data) => {
+                        ltp = ltp_data.ltp;
+                    }
+                    Err(e) => {
+                        tracing::error!("Error fetching LTP data: {:?}", e);
+                        // tx_redis.send(Signal::Error(e)).await.unwrap();
+                        // return;
                     }
                 }
+
+                // match price_hasmap.get(&order_clone.inner.symbol_token) {
+                //     Some(price) => {
+                //         ltp = *price as f64;
+                //     }
+                //     None => {
+                //         tracing::error!("Error fetching LTP data from hashmap");
+                //     }
+                // }
 
                 tx_redis
                     .send(Signal::UpdateSquareOffDemo {

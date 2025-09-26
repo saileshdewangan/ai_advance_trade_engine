@@ -218,7 +218,8 @@ impl ClientNode {
                                                         //     Ltp = ltp
                                                         // );
 
-                                                        handler.trail_stop_loss(ltp);
+                                                        // COMMENTED DUE TO WRONG CALCULATION
+                                                        // handler.trail_stop_loss(ltp);
 
                                                         if ltp <= handler.stop_loss_price
                                                             || ltp >= handler.target_price
@@ -238,14 +239,12 @@ impl ClientNode {
                                                             info!("\n\nBuy square off trade");
                                                         }
                                                     } else {
-                                                        // info!(
-                                                        //     ?handler.transaction_type, pnl = (handler.trade_entry_price - ltp)
-                                                        //     * handler.quantity as f32, target_price = handler.target_price,
-                                                        //     sl_price = handler.stop_loss_price);
-                                                        // handler.trail_stop_loss(ltp);
+                                                        
                                                         println!("\n");
                                                         info!("Entry Price {},SL price = {}, Target price = {}, LTP = {}",handler.trade_entry_price, handler.stop_loss_price, handler.target_price, ltp);
-                                                        handler.trail_stop_loss(ltp);
+                                                        
+                                                        // COMMENTED DUE TO WRONG CALCULATION
+                                                        // handler.trail_stop_loss(ltp);
 
                                                         if ltp >= handler.stop_loss_price
                                                             || ltp <= handler.target_price
@@ -793,7 +792,6 @@ impl ClientNode {
 
                                 if let Some(client_arc) = self.angelone_client.clone() {
                                     let client_arc_clone = client_arc.clone();
-                                    let price_hash_clone = price_hashmap.clone();
 
                                     println!("\n Engines size : {:?}", self.trade_engines.len());
                                     if let Some(engine) =
@@ -811,7 +809,7 @@ impl ClientNode {
                                                     trade_engine_id,
                                                     strategy_clone,
                                                     tx_redis_clone,
-                                                    price_hash_clone,
+                                                    // price_hash_clone,
                                                 )
                                                 .await;
                                             });
@@ -840,7 +838,7 @@ impl ClientNode {
 
                             if let Some(client_arc) = self.angelone_client.clone() {
                                 let client_arc_clone = client_arc.clone();
-                                let price_hashmap_clone = price_hashmap.clone();
+                                // let price_hashmap_clone = price_hashmap.clone();
                                 if let Some(engine) = self.trade_engines.get_mut(&trade_engine_id) {
                                     if engine.trade_status == TradeStatus::Triggered
                                         || engine.trade_status == TradeStatus::AwaitingConfirmation
@@ -857,7 +855,7 @@ impl ClientNode {
                                                 strategy,
                                                 remove_trade_engine,
                                                 tx_redis_clone,
-                                                price_hashmap_clone,
+                                                // price_hashmap_clone,
                                             )
                                             .await;
                                         });
