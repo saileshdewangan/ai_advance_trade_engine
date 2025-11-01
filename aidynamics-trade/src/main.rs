@@ -42,7 +42,7 @@ use redis::streams::StreamReadOptions;
 use tokio::net::TcpStream;
 use tokio::signal;
 // use futures::channel::mpsc::Receiver;
-// use tokio::sync::broadcast;
+use tokio::sync::broadcast;
 use tokio::sync::mpsc::Receiver;
 
 // use futures::channel::mpsc::Receiver;
@@ -457,7 +457,7 @@ fn create_channels() -> (
     mpsc::Receiver<Signal>,
     tokio::sync::mpsc::Sender<Signal>,
     tokio::sync::mpsc::Receiver<Signal>,
-    // Arc<broadcast::Sender<Signal>>,
+    Arc<tokio::sync::broadcast::Sender<Signal>>,
     Arc<tokio::sync::mpsc::Sender<Signal>>,
     // tokio::sync::mpsc::Sender<Signal>,
     tokio::sync::mpsc::Receiver<Signal>,
@@ -467,10 +467,12 @@ fn create_channels() -> (
     let (tx_redis, rx_redis) = mpsc::channel(100);
     let (tx_aows, rx_aows) = mpsc::channel(200);
     let (tx_main, rx_main) = tokio::sync::mpsc::channel::<Signal>(100);
-    // let (tx_broadcast, _) = broadcast::channel::<Signal>(100);
+    let (tx_broadcast, _) = broadcast::channel::<Signal>(100);
     let (tx_order_processor, rx_order_processor) = tokio::sync::mpsc::channel::<Signal>(100);
     // let client_channels: ClientChannels = Arc::new(tokio::sync::RwLock::new(HashMap::new()));
     let client_channels: ClientChannels = HashMap::new();
+
+    let tx_broadcast_arc = Arc::new(tx_broadcast);
 
     let tx_order_processor_arc = Arc::new(tx_order_processor);
     (
@@ -480,6 +482,7 @@ fn create_channels() -> (
         rx_aows,
         tx_main.clone(),
         rx_main,
+        tx_broadcast_arc,
         tx_order_processor_arc,
         rx_order_processor,
         client_channels,
@@ -589,6 +592,7 @@ async fn main() {
         mut rx_aows,
         tx_main,
         mut rx_main,
+        tx_broadcast_arc,
         tx_order_processor_arc,
         // tx_order_processor,
         mut rx_order_processor,
@@ -627,7 +631,7 @@ async fn main() {
     /// PROCESS ALL TRADE HANDLERS BEGIN
     async fn receive_messages(
         rx_main: &mut Receiver<Signal>,
-        // tx_broadcast_clone: Arc<tokio::sync::broadcast::Sender<Signal>>,
+        tx_broadcast_clone: Arc<tokio::sync::broadcast::Sender<Signal>>,
         // client_channels: Arc<tokio::sync::RwLock<HashMap<u32, Sender<Signal>>>>,
         mut client_channels: HashMap<u32, Sender<Signal>>,
         tx_aows: Sender<Signal>,
@@ -650,36 +654,45 @@ async fn main() {
                         client_nodes_set.insert(client_id);
 
                         // let mut map = client_channels.write().await;
-                        let (tx, rx) = mpsc::channel(100);
+                        // let (tx, rx) = mpsc::channel(100);
 
-                        client_channels.insert(client_id, tx.clone());
+                        // client_channels.insert(client_id, tx.clone());
+                        let rx = tx_broadcast_clone.subscribe();
 
-                        println!("\n New Client Added : {:?} \n", client_id);
+                        println!("\nNew Client Added : {:?} \n", client_id);
+
+                        let new_client = SmartConnect::new_with_jwt(api_key, Some(&jwt_token))
+                            .await
+                            .unwrap();
+                        let angelone_client = Some(Arc::new(new_client));
 
                         let mut new_client_node = ClientNode {
                             client_id,
                             trade_engines: HashMap::new(),
+                            tx_broadcast: tx_broadcast_clone.clone(),
                             tx_main: tx_main.clone(),
                             tx_redis: tx_redis.clone(),
                             tx_angelone_sender: tx_aows.clone(),
                             active_trade_ids: HashSet::new(),
                             handler_ids: HashSet::new(),
-                            // strategy_to_process: Strategy::Momentum,
-                            angelone_client: None,
+                            angelone_client: angelone_client,
                         };
 
                         tokio::spawn(async move {
                             new_client_node.process_engine(rx).await;
                         });
-                        println!(
-                            "\n\n\n NO OF CHANNELS INSIDE ADD CLIENT : {:?} \n\n\n",
-                            client_channels.len()
-                        );
+                        // println!(
+                        //     "\n\n\n NO OF CHANNELS INSIDE ADD CLIENT : {:?} \n\n\n",
+                        //     client_channels.len()
+                        // );
                     }
-                    for (_, tx) in client_channels.iter() {
-                        let new_msg = msg.clone();
-                        let _ = tx.send(new_msg).await;
-                    }
+                    // for (_, tx) in client_channels.iter() {
+                    //     let new_msg = msg.clone();
+                    //     let _ = tx.send(new_msg).await;
+                    // }
+
+                    // let new_msg = msg.clone();
+                    // let _ = tx_broadcast_clone.send(new_msg);
                 }
                 Signal::RequestSquareOff {
                     client_id,
@@ -687,14 +700,16 @@ async fn main() {
                     remove_trade_engine,
                     trade_engine_id,
                 } => {
-                    if let Some(tx) = client_channels.get(&client_id) {
-                        let _ = tx.send(msg).await;
-                    } else {
-                        for (_, tx) in client_channels.iter() {
-                            let new_msg = msg.clone();
-                            let _ = tx.send(new_msg).await;
-                        }
-                    }
+                    // if let Some(tx) = client_channels.get(&client_id) {
+                    //     let _ = tx.send(msg).await;
+                    // } else {
+                    //     for (_, tx) in client_channels.iter() {
+                    //         let new_msg = msg.clone();
+                    //         let _ = tx.send(new_msg).await;
+                    //     }
+                    // }
+                    let new_msg = msg.clone();
+                    let _ = tx_broadcast_clone.send(new_msg);
                 }
                 Signal::NewTradeEngine(new_engine) => {
                     let engine = new_engine.clone();
@@ -705,9 +720,10 @@ async fn main() {
                         client_nodes_set.insert(client_id);
 
                         // let mut map = client_channels.write().await;
-                        let (tx, rx) = mpsc::channel(100);
+                        let rx = tx_broadcast_clone.subscribe();
+                        // let (tx, rx) = mpsc::channel(100);
 
-                        client_channels.insert(engine.client_id, tx.clone());
+                        // client_channels.insert(engine.client_id, tx.clone());
 
                         let mut new_trade_engines = HashMap::new();
 
@@ -715,7 +731,7 @@ async fn main() {
                         let mut new_client_node = ClientNode {
                             client_id,
                             trade_engines: new_trade_engines,
-                            // tx_broadcast: tx_broadcast_clone.clone(),
+                            tx_broadcast: tx_broadcast_clone.clone(),
                             tx_main: tx_main.clone(),
                             tx_redis: tx_redis.clone(),
                             tx_angelone_sender: tx_aows.clone(),
@@ -734,48 +750,54 @@ async fn main() {
                             new_client_node.process_engine(rx).await;
                         });
                     }
-                    println!(
-                        "\n\n\n NO OF CHANNELS IN NEW TRADE ENGINE : {:?} \n\n\n",
-                        client_channels.len()
-                    );
-                    // client_channels.get(&client_id).map(|tx| {
-                    //     let _ = tx.send(msg.clone());
-                    // });
-                    match client_channels.get(&client_id) {
-                        Some(tx) => {
-                            let _ = tx.send(msg).await;
-                        }
-                        None => {
-                            println!("\n Client ID not found in channels, broadcasting to all clients \n");
-                            for (_, tx) in client_channels.iter() {
-                                let new_msg = msg.clone();
-                                let _ = tx.send(new_msg).await;
-                            }
-                        }
-                    }
-                    // for (_, tx) in client_channels.iter() {
-                    //     let new_msg = msg.clone();
-                    //     let _ = tx.send(new_msg).await;
+
+                    // match client_channels.get(&client_id) {
+                    //     Some(tx) => {
+                    //         let _ = tx.send(msg).await;
+                    //     }
+                    //     None => {
+                    //         println!("\n Client ID not found in channels, broadcasting to all clients \n");
+                    //         for (_, tx) in client_channels.iter() {
+                    //             let new_msg = msg.clone();
+                    //             let _ = tx.send(new_msg).await;
+                    //         }
+                    //     }
                     // }
+                    let new_msg = msg.clone();
+
+                    let _ = tx_broadcast_clone.send(new_msg);
                 }
                 Signal::Disconnect(client_id) => {
+                    println!("\nReceived Disconnect => {:?}\n", msg_clone.clone());
+
+                    println!(
+                        "\n Total node sets Before remove => {:?}\n",
+                        client_nodes_set.len()
+                    );
+                    println!("\nDisconnecting in main client id {:?}", client_id);
                     if client_id != 0 {
                         client_nodes_set.remove(&client_id);
                     }
-                    for (_, tx) in client_channels.iter() {
-                        let new_msg = msg_clone.clone();
-                        let _ = tx.send(new_msg).await;
-                    }
+                    println!(
+                        "\n Total node sets After remove => {:?}\n",
+                        client_nodes_set.len()
+                    );
+
+                    // for (_, tx) in client_channels.iter() {
+                    //     let new_msg = msg_clone.clone();
+                    //     let _ = tx.send(new_msg).await;
+                    // }
+
+                    let _ = tx_broadcast_clone.send(msg_clone);
                 }
                 // Forward all other messages to the broadcast channel
                 _ => {
-                    // let map = client_channels.read().await;
-                    // for (_client_id, tx) in map.iter() {
                     // println!("\n Forwarding messages : {:?}\n", msg_clone);
-                    for (_, tx) in client_channels.iter() {
-                        let new_msg = msg_clone.clone();
-                        let _ = tx.send(new_msg).await;
-                    }
+                    // for (_, tx) in client_channels.iter() {
+                    //     let new_msg = msg_clone.clone();
+                    //     let _ = tx.send(new_msg).await;
+                    // }
+                    let _ = tx_broadcast_clone.send(msg_clone);
                 }
             }
         }
@@ -806,6 +828,7 @@ async fn main() {
     tokio::spawn(async move {
         receive_messages(
             &mut rx_main,
+            tx_broadcast_arc.clone(),
             client_channel_clone,
             tx_aows_main.clone(),
             tx_main_cln,

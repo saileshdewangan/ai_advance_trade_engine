@@ -5,12 +5,15 @@ use chrono::{Duration, Utc};
 // use tokio::sync::Mutex;
 // use reqwest::{Client, Response};
 use serde_json::{from_value, Result as SerdeResult, Value};
+use tracing::info;
 
 use crate::{
     order::{OrderSetter, PlaceOrderReq},
+    order_processor::order_processor::OrderProcessor,
     redis_utils::Signal,
     types::{ExchangeType, ProductType, TransactionType},
     websocket::angel_one_websocket::SubscriptionExchange,
+    SmartConnect,
 };
 
 use serde_repr::{Deserialize_repr, Serialize_repr};
@@ -104,7 +107,7 @@ pub struct TradeRes {
     /// To identify which stategy is processing
     pub strategy: Strategy,
 
-    /// To identify which stategy is processing
+    /// To identify order id
     pub order_id: String,
 }
 
@@ -517,7 +520,7 @@ impl TradeEngine {
     /// New trade function to place new order with params
     pub async fn execute_trade(&mut self, tx_order_processor: Arc<mpsc::Sender<Signal>>) {
         println!(
-            "Trade executed : -> Client Id = {:?} : Engine Id = {:?}",
+            "\nTrade executed : -> Client Id = {:?} : Engine Id = {:?}",
             self.client_id, self.trade_engine_id
         );
         if let Some(req) = self.entry_req.clone() {
@@ -531,8 +534,54 @@ impl TradeEngine {
                 })
                 .await
             {
-                tracing::error!("Failed to send trade execution signal: {:?}", err);
+                tracing::error!("\nFailed to send trade execution signal: {:?}", err);
             }
+        }
+    }
+
+    /// New trade execution function, here this is not sending the signal to order processor
+    pub async fn execute_new_trade(
+        &mut self,
+        angelone_client: Arc<SmartConnect>,
+        tx_main: Arc<mpsc::Sender<Signal>>,
+        tx_redis: mpsc::Sender<Signal>,
+    ) {
+        println!(
+            "\nTrade executed : -> Client Id = {:?} : Engine Id = {:?}",
+            self.client_id, self.trade_engine_id
+        );
+
+        if let Some(req) = self.entry_req.clone() {
+            // self.trade_status = TradeStatus::Confirming;
+            self.trade_status = TradeStatus::Executing;
+
+            let order_clone = req.clone();
+            // let tx_main_clone = tx_order_processor.clone();
+            let strategy_clone = self.strategy.clone(); // Clone strategy outside of the task so it is not moved.
+            let client_id = self.client_id;
+            let trade_engine_id = self.trade_engine_id;
+            // let tx_redis_clone = tx_redis.clone();
+            println!("\n");
+            info!(
+                "Executing -> Engine = {:?} client id = {:?}",
+                trade_engine_id,
+                client_id.clone()
+            );
+
+            // let client_arc_clone = angelone_client.clone();
+
+            tokio::spawn(async move {
+                OrderProcessor::handle_order_placement(
+                    client_id,
+                    angelone_client,
+                    order_clone,
+                    tx_main,
+                    trade_engine_id,
+                    strategy_clone,
+                    tx_redis,
+                )
+                .await;
+            });
         }
     }
 
@@ -549,8 +598,8 @@ impl TradeEngine {
         // }
     }
 
-    /// Trailing stop loss function to update stop loss according to current price
-    pub fn trail_stop_loss(&mut self, current_price: f32) {
+    /// Automatically Trail stop loss function to update stop loss according to current price
+    pub fn auto_trail_stop_loss(&mut self, current_price: f32) {
         if self.transaction_type == TransactionType::BUY {
             let gap = self.trade_entry_price - self.stop_loss_price; // e.g., 30
             let trigger_level = self.trade_entry_price + gap; // e.g., 130
@@ -605,6 +654,17 @@ impl TradeEngine {
                     self.stop_loss_price
                 );
             }
+        }
+    }
+
+    /// Trailing stop loss manually to update stop loss
+    pub fn trail_stop_loss(&mut self, sl_points: f32) {
+        if self.transaction_type == TransactionType::BUY {
+            // At trigger, SL jumps to entry price
+            self.stop_loss_price += sl_points;
+        } else if self.transaction_type == TransactionType::SELL {
+            // At trigger, SL jumps to entry price
+            self.stop_loss_price -= sl_points;
         }
     }
 
@@ -691,6 +751,44 @@ impl TradeEngine {
                 .await
             {
                 tracing::error!("\nFailed to send trade execution signal: {:?}", err);
+            }
+        }
+    }
+
+    /// square off trade function to place new order with params,here this is not sending the signal to order processor
+    pub async fn squareoff_new_trade(
+        &mut self,
+        angelone_client: Arc<SmartConnect>,
+        tx_main: Arc<mpsc::Sender<Signal>>,
+        tx_redis: mpsc::Sender<Signal>,
+        remove_trade_engine: bool,
+    ) {
+        if let Some(order_req) = self.exit_req.clone() {
+            let strategy = self.strategy.clone(); // Clone strategy outside of the task so it is not moved.
+            let client_id = self.client_id;
+            let trade_engine_id = self.trade_engine_id;
+            let trade_id = self.trade_id;
+
+            let client_arc_clone = angelone_client.clone();
+            if self.trade_status == TradeStatus::Triggered
+                || self.trade_status == TradeStatus::AwaitingConfirmation
+            {
+                self.trade_status = TradeStatus::SquaringOff;
+                tokio::spawn(async move {
+                    OrderProcessor::handle_squareoff_placement(
+                        client_id,
+                        client_arc_clone,
+                        order_req,
+                        tx_main,
+                        trade_engine_id,
+                        trade_id,
+                        strategy,
+                        remove_trade_engine,
+                        tx_redis,
+                        // price_hashmap_clone,
+                    )
+                    .await;
+                });
             }
         }
     }
