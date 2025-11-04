@@ -137,81 +137,122 @@ impl TradeRes {
 }
 
 // Struct to hold the updates for TradeEngine fields
-#[derive(Debug, Serialize, Deserialize, Clone)]
-/// `TradeEngineUpdates` is a configuration struct used to update specific trading parameters
-/// within a trade engine. It provides customizable settings for managing trade limits,
-/// risk controls, and strategy parameters.
-///
-/// This struct is typically used to update an existing `TradeEngine` instance with new values
-/// for fields like transaction type, stop-loss thresholds, trade targets, and limits. Each
-/// field represents a specific aspect of the trading strategy, allowing for fine-tuned control
-/// over trade execution and risk management.
-pub struct TradeEngineUpdates {
-    /// Specifies the type of transaction (e.g., `Buy` or `Sell`) to be executed.
-    #[serde(rename = "transaction_type")]
-    pub transaction_type: TransactionType,
+// #[derive(Debug, Serialize, Deserialize, Clone)]
+// /// `TradeEngineUpdates` is a configuration struct used to update specific trading parameters
+// /// within a trade engine. It provides customizable settings for managing trade limits,
+// /// risk controls, and strategy parameters.
+// ///
+// /// This struct is typically used to update an existing `TradeEngine` instance with new values
+// /// for fields like transaction type, stop-loss thresholds, trade targets, and limits. Each
+// /// field represents a specific aspect of the trading strategy, allowing for fine-tuned control
+// /// over trade execution and risk management.
+// pub struct TradeEngineUpdates {
+//     /// Specifies the type of transaction (e.g., `Buy` or `Sell`) to be executed.
+//     #[serde(rename = "transaction_type")]
+//     pub transaction_type: TransactionType,
 
-    /// Sets the maximum number of trades allowed for the current session or strategy.
-    /// This limit helps control trade frequency and prevent overtrading.
-    pub max_trades: u32,
+//     /// Sets the maximum number of trades allowed for the current session or strategy.
+//     /// This limit helps control trade frequency and prevent overtrading.
+//     pub max_trades: u32,
 
-    /// Defines the maximum allowable loss for the current trade. If the loss exceeds this
-    /// threshold, the trade engine may automatically close the position to mitigate risk.
-    pub max_loss: f32,
+//     /// Defines the maximum allowable loss for the current trade. If the loss exceeds this
+//     /// threshold, the trade engine may automatically close the position to mitigate risk.
+//     pub max_loss: f32,
 
-    /// Sets the trailing stop-loss value, which dynamically adjusts the stop-loss as the
-    /// trade becomes profitable. This helps lock in profits while allowing for favorable
-    /// price movement.
-    pub trailing_sl: f32,
+//     /// Sets the trailing stop-loss value, which dynamically adjusts the stop-loss as the
+//     /// trade becomes profitable. This helps lock in profits while allowing for favorable
+//     /// price movement.
+//     pub trailing_sl: f32,
 
-    /// Specifies the target price at which the trade should be exited to realize profits.
-    /// This value helps automate profit-taking decisions within the strategy.
-    pub target: f32,
+//     /// Specifies the target price at which the trade should be exited to realize profits.
+//     /// This value helps automate profit-taking decisions within the strategy.
+//     pub target: f32,
 
-    /// Defines the trading strategy to be applied for the trade execution.
-    /// The `Strategy` enum or type provides various strategy options (e.g., `Scalping`, `Swing`).
-    pub strategy: Strategy,
+//     /// Defines the trading strategy to be applied for the trade execution.
+//     /// The `Strategy` enum or type provides various strategy options (e.g., `Scalping`, `Swing`).
+//     pub strategy: Strategy,
 
-    /// Sets the initial stop-loss value for the trade. If the trade's price reaches this level,
-    /// the position will be exited to minimize losses.
-    pub sl: f32,
+//     /// Sets the initial stop-loss value for the trade. If the trade's price reaches this level,
+//     /// the position will be exited to minimize losses.
+//     pub sl: f32,
 
-    /// Specifies the quantity of the asset to be traded. This value determines the position size
-    /// and directly impacts the trade's potential risk and reward.
-    pub quantity: u32,
+//     /// Specifies the quantity of the asset to be traded. This value determines the position size
+//     /// and directly impacts the trade's potential risk and reward.
+//     pub quantity: u32,
 
-    /// Sets the maximum allowable price for trade entry. If the asset's price exceeds this limit,
-    /// the trade will not be executed, helping avoid trades at unfavorable price levels.
-    pub max_price: f32,
+//     /// Sets the maximum allowable price for trade entry. If the asset's price exceeds this limit,
+//     /// the trade will not be executed, helping avoid trades at unfavorable price levels.
+//     pub max_price: f32,
 
-    /// Symbol which derives to
-    #[serde(default = "default_symbol")]
-    pub symbol: String,
-}
+//     /// Symbol which derives to
+//     #[serde(default = "default_symbol")]
+//     pub symbol: String,
+// }
 
 fn default_symbol() -> String {
     "Nifty".to_string()
 }
 
-/// Struct to manage client information
+/// Struct to manage trade setup information
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct TradeEngine {
+pub struct TradeSetup {
     /// Unique trade engine id : NO CHANGE WITHOUT REQUEST
     pub trade_engine_id: u32,
-
-    /// client id
-    #[serde(rename = "client_id")]
-    pub client_id: u32,
-
-    // /// Client profile set after initialization : NO CHANGE WITHOUT REQUEST
-    // pub profile: Option<Profile>,
-    /// Segment  : NO CHANGE WITHOUT REQUEST, this is saved as segment but it is subscriptionExchange
-    #[serde(default = "default_segment")]
-    pub segment: SubscriptionExchange,
 
     /// Symbol which derives to  : NO CHANGE WITHOUT REQUEST
     pub symbol: String,
 
+    /// Max price allowed : NO CHANGE WITHOUT REQUEST
+    pub max_price: f32,
+
+    /// Max trades allowed : NO CHANGE WITHOUT REQUEST
+    pub max_trades: u32,
+
+    /// Max loss allowed : NO CHANGE WITHOUT REQUEST
+    pub max_loss: f32,
+
+    /// Strategy : NO CHANGE WITHOUT REQUEST
+    pub strategy: Strategy,
+
+    /// Segment  : NO CHANGE WITHOUT REQUEST, this is saved as segment but it is subscriptionExchange
+    pub segment: SubscriptionExchange,
+
+    /// Sl in points
+    pub sl: f32,
+
+    /// Target in points
+    pub target: f32,
+
+    /// Trade quantity : NO CHANGE WITHOUT REQUEST
+    pub quantity: u32,
+
+    /// Trade transaction type, that is Buy or Sell : NO CHANGE WITHOUT REQUEST
+    pub transaction_type: TransactionType,
+
+    /// Trailing sl
+    #[serde(default = "default_trailing_sl")]
+    pub trailing_sl: f32,
+}
+
+/// Struct to manage client information
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct TradeEngine {
+    /// Trade setup information
+    #[serde(rename = "trade_setup")]
+    pub trade_setup: TradeSetup,
+
+    // /// Unique trade engine id : NO CHANGE WITHOUT REQUEST
+    // pub trade_engine_id: u32,
+    /// client id
+    #[serde(rename = "client_id")]
+    pub client_id: u32,
+
+    /// Segment  : NO CHANGE WITHOUT REQUEST, this is saved as segment but it is subscriptionExchange
+    // #[serde(default = "default_segment")]
+    // pub segment: SubscriptionExchange,
+
+    // /// Symbol which derives to  : NO CHANGE WITHOUT REQUEST
+    // pub symbol: String,
     /// Symbol to execute
     #[serde(default = "default_trading_symbol")]
     pub trading_symbol: String,
@@ -230,27 +271,21 @@ pub struct TradeEngine {
     /// Order Request for exit
     pub exit_req: Option<PlaceOrderReq>,
 
-    // /// Order Request for entry TESTING : IT HAS TO BE REMOVED
-    // pub entry_req_test: Option<PlaceOrderReq>,
-
-    // /// Order Request for exit TESTING : IT HAS TO BE REMOVED
-    // pub exit_req_test: Option<PlaceOrderReq>,
     /// total trades executed : NO CHANGE WITHOUT REQUEST
     #[serde(default = "default_executed_trades")]
     pub executed_trades: u32,
 
-    /// Max price allowed : NO CHANGE WITHOUT REQUEST
-    pub max_price: f32,
+    // /// Max price allowed : NO CHANGE WITHOUT REQUEST
+    // pub max_price: f32,
 
-    /// Max trades allowed : NO CHANGE WITHOUT REQUEST
-    pub max_trades: u32,
+    // /// Max trades allowed : NO CHANGE WITHOUT REQUEST
+    // pub max_trades: u32,
 
-    /// Max loss allowed : NO CHANGE WITHOUT REQUEST
-    pub max_loss: f32,
+    // /// Max loss allowed : NO CHANGE WITHOUT REQUEST
+    // pub max_loss: f32,
 
-    /// Strategy : NO CHANGE WITHOUT REQUEST
-    pub strategy: Strategy,
-
+    // /// Strategy : NO CHANGE WITHOUT REQUEST
+    // pub strategy: Strategy,
     /// Trade status
     pub trade_status: TradeStatus,
 
@@ -265,36 +300,32 @@ pub struct TradeEngine {
     /// Trade exit price
     // pub trade_exit_price: f32,
 
-    /// Trade sl in points
-    // pub trade_sl_points: f64, : NO CHANGE WITHOUT REQUEST
-    pub sl: f32,
+    // // pub trade_sl_points: f64, : NO CHANGE WITHOUT REQUEST
+    // pub sl: f32,
 
     /// Trade sl price, which will be calculated at time of execution
     #[serde(default = "default_stop_loss_price")]
     pub stop_loss_price: f32,
 
-    /// Trailing sl
-    #[serde(default = "default_trailing_sl")]
-    pub trailing_sl: f32,
+    // /// Trailing sl
+    // #[serde(default = "default_trailing_sl")]
+    // pub trailing_sl: f32,
 
-    /// Target in points
-    #[serde(default = "default_target")]
-    pub target: f32,
-
+    // /// Target in points
+    // #[serde(default = "default_target")]
+    // pub target: f32,
     /// Trade target price, which will be calculated at time of execution
     #[serde(default = "default_target_price")]
     pub target_price: f32,
 
-    /// Trade quantity : NO CHANGE WITHOUT REQUEST
-    pub quantity: u32,
-
-    #[serde(rename = "tradeid")]
+    // /// Trade quantity : NO CHANGE WITHOUT REQUEST
+    // pub quantity: u32,
+    #[serde(rename = "trade_id")]
     /// trade received from server after every time trade execution
     pub trade_id: u32,
 
-    /// Trade transaction type, that is Buy or Sell : NO CHANGE WITHOUT REQUEST
-    pub transaction_type: TransactionType,
-
+    // /// Trade transaction type, that is Buy or Sell : NO CHANGE WITHOUT REQUEST
+    // pub transaction_type: TransactionType,
     /// Open position type, that is to Long or Short the instrument
     #[serde(default = "default_position_type")]
     pub position_type: TransactionType,
@@ -302,10 +333,6 @@ pub struct TradeEngine {
     /// Execution time
     #[serde(default = "default_execution_time")]
     pub execution_time: i64,
-
-    /// Is margin available
-    // #[serde(default = "default_margin")]
-    // pub margin: i32,
 
     /// unique order id to identify order.
     /// This will be set after order placement
@@ -435,32 +462,45 @@ fn default_order_id() -> Option<String> {
 impl Default for TradeEngine {
     fn default() -> Self {
         TradeEngine {
-            trade_engine_id: 0,
+            trade_setup: TradeSetup {
+                trade_engine_id: 0,
+                symbol: "".to_string(),
+                max_price: 0.0,
+                max_trades: 0,
+                max_loss: 0.0,
+                strategy: Strategy::Momentum,
+                segment: SubscriptionExchange::NSEFO,
+                sl: 0.0,
+                target: 0.0,
+                quantity: 0,
+                transaction_type: TransactionType::BUY,
+                trailing_sl: 0.0,
+            },
             client_id: 0,
             // profile: None,
-            segment: SubscriptionExchange::NSEFO,
-            symbol: "".to_string(),
+            // segment: SubscriptionExchange::NSEFO,
+            // symbol: "".to_string(),
             trading_symbol: "".to_string(),
             exchange_type: ExchangeType::NFO,
             symbol_token: "".to_string(),
             entry_req: None,
             exit_req: None,
             executed_trades: 0,
-            max_price: 0.0,
-            max_trades: 0,
-            max_loss: 0.0,
-            strategy: Strategy::Momentum,
+            // max_price: 0.0,
+            // max_trades: 0,
+            // max_loss: 0.0,
+            // strategy: Strategy::Momentum,
             trade_status: TradeStatus::Closed,
             trigger_price: 0.0,
             trade_entry_price: 0.0,
             stop_loss_price: 0.0,
-            sl: 0.0,
-            trailing_sl: 0.0,
-            target: 0.0,
+            // sl: 0.0,
+            // trailing_sl: 0.0,
+            // target: 0.0,
             target_price: 0.0,
-            quantity: 0,
+            // quantity: 0,
             trade_id: 0,
-            transaction_type: TransactionType::BUY,
+            // transaction_type: TransactionType::BUY,
             position_type: TransactionType::BUY,
             execution_time: 0,
             unique_order_id: None,
@@ -521,15 +561,15 @@ impl TradeEngine {
     pub async fn execute_trade(&mut self, tx_order_processor: Arc<mpsc::Sender<Signal>>) {
         println!(
             "\nTrade executed : -> Client Id = {:?} : Engine Id = {:?}",
-            self.client_id, self.trade_engine_id
+            self.client_id, self.trade_setup.trade_engine_id
         );
         if let Some(req) = self.entry_req.clone() {
             self.trade_status = TradeStatus::Confirming;
             if let Err(err) = tx_order_processor
                 .send(Signal::ExecuteOrder {
                     order_req: req,
-                    strategy: self.strategy.clone(),
-                    trade_engine_id: self.trade_engine_id,
+                    strategy: self.trade_setup.strategy.clone(),
+                    trade_engine_id: self.trade_setup.trade_engine_id,
                     client_id: self.client_id,
                 })
                 .await
@@ -548,7 +588,7 @@ impl TradeEngine {
     ) {
         println!(
             "\nTrade executed : -> Client Id = {:?} : Engine Id = {:?}",
-            self.client_id, self.trade_engine_id
+            self.client_id, self.trade_setup.trade_engine_id
         );
 
         if let Some(req) = self.entry_req.clone() {
@@ -557,9 +597,9 @@ impl TradeEngine {
 
             let order_clone = req.clone();
             // let tx_main_clone = tx_order_processor.clone();
-            let strategy_clone = self.strategy.clone(); // Clone strategy outside of the task so it is not moved.
+            let strategy_clone = self.trade_setup.strategy.clone(); // Clone strategy outside of the task so it is not moved.
             let client_id = self.client_id;
-            let trade_engine_id = self.trade_engine_id;
+            let trade_engine_id = self.trade_setup.trade_engine_id;
             // let tx_redis_clone = tx_redis.clone();
             println!("\n");
             info!(
@@ -588,19 +628,19 @@ impl TradeEngine {
     /// Checks condition can it accept new trade according to condition or not
     pub fn can_accept_new_trade(&self, strategy: &Strategy) -> bool {
         // if self.client_id != 0 {
-        self.executed_trades < self.max_trades
+        self.executed_trades < self.trade_setup.max_trades
             && self.trade_status == TradeStatus::Closed
-            && self.strategy == *strategy
+            && self.trade_setup.strategy == *strategy
         // } else {
-        //     self.executed_trades < self.max_trades
+        //     self.executed_trades < self.trade_setup.max_trades
         //         && self.trade_status == TradeStatus::Closed
-        //         && self.strategy == *strategy
+        //         && self.trade_setup.strategy == *strategy
         // }
     }
 
     /// Automatically Trail stop loss function to update stop loss according to current price
     pub fn auto_trail_stop_loss(&mut self, current_price: f32) {
-        if self.transaction_type == TransactionType::BUY {
+        if self.trade_setup.transaction_type == TransactionType::BUY {
             let gap = self.trade_entry_price - self.stop_loss_price; // e.g., 30
             let trigger_level = self.trade_entry_price + gap; // e.g., 130
 
@@ -627,7 +667,7 @@ impl TradeEngine {
                     self.stop_loss_price
                 );
             }
-        } else if self.transaction_type == TransactionType::SELL {
+        } else if self.trade_setup.transaction_type == TransactionType::SELL {
             let gap = self.stop_loss_price - self.trade_entry_price; // e.g., 30
             let trigger_level = self.trade_entry_price - gap; // e.g., 70 if entry=100, SL=130
 
@@ -659,10 +699,10 @@ impl TradeEngine {
 
     /// Trailing stop loss manually to update stop loss
     pub fn trail_stop_loss(&mut self, sl_points: f32) {
-        if self.transaction_type == TransactionType::BUY {
+        if self.trade_setup.transaction_type == TransactionType::BUY {
             // At trigger, SL jumps to entry price
             self.stop_loss_price += sl_points;
-        } else if self.transaction_type == TransactionType::SELL {
+        } else if self.trade_setup.transaction_type == TransactionType::SELL {
             // At trigger, SL jumps to entry price
             self.stop_loss_price -= sl_points;
         }
@@ -674,7 +714,7 @@ impl TradeEngine {
         self.trigger_price = other.trigger_price;
         self.position_type = other.position_type;
 
-        match self.transaction_type {
+        match self.trade_setup.transaction_type {
             TransactionType::BUY => {
                 self.symbol_token = other.buyer_symbol_token.clone();
                 self.trading_symbol = other.buyer_trading_symbol.clone();
@@ -695,24 +735,24 @@ impl TradeEngine {
 
     /// Update variants when trades are opens
     pub async fn update_values(&mut self) {
-        match self.transaction_type {
+        match self.trade_setup.transaction_type {
             TransactionType::BUY => {
-                println!("\nTarget in BUY -> {:?}", self.target);
-                self.target_price = if self.target == 0.0 {
+                println!("\nTarget in BUY -> {:?}", self.trade_setup.target);
+                self.target_price = if self.trade_setup.target == 0.0 {
                     self.trade_entry_price + 120000.0
                 } else {
-                    self.trade_entry_price + self.target
+                    self.trade_entry_price + self.trade_setup.target
                 };
-                self.stop_loss_price = self.trade_entry_price - self.sl;
+                self.stop_loss_price = self.trade_entry_price - self.trade_setup.sl;
             }
             TransactionType::SELL => {
-                println!("\nTarget in SELL -> {:?}", self.target);
-                self.target_price = if self.target != 0.0 {
-                    self.trade_entry_price - self.target
+                println!("\nTarget in SELL -> {:?}", self.trade_setup.target);
+                self.target_price = if self.trade_setup.target != 0.0 {
+                    self.trade_entry_price - self.trade_setup.target
                 } else {
                     0.0
                 };
-                self.stop_loss_price = self.sl - self.trade_entry_price;
+                self.stop_loss_price = self.trade_setup.sl - self.trade_entry_price;
             }
         }
     }
@@ -738,13 +778,13 @@ impl TradeEngine {
         //     self.trade_status = TradeStatus::Closed;
         // }
         if let Some(req) = self.exit_req.clone() {
-            let strategy_clone = self.strategy.clone();
+            let strategy_clone = self.trade_setup.strategy.clone();
             if let Err(err) = tx_order_processor
                 .send(Signal::SquareOffTrade {
                     client_id: self.client_id,
                     order_req: req,
                     trade_id: self.trade_id,
-                    trade_engine_id: self.trade_engine_id,
+                    trade_engine_id: self.trade_setup.trade_engine_id,
                     remove_trade_engine,
                     strategy: strategy_clone,
                 })
@@ -764,9 +804,9 @@ impl TradeEngine {
         remove_trade_engine: bool,
     ) {
         if let Some(order_req) = self.exit_req.clone() {
-            let strategy = self.strategy.clone(); // Clone strategy outside of the task so it is not moved.
+            let strategy = self.trade_setup.strategy.clone(); // Clone strategy outside of the task so it is not moved.
             let client_id = self.client_id;
-            let trade_engine_id = self.trade_engine_id;
+            let trade_engine_id = self.trade_setup.trade_engine_id;
             let trade_id = self.trade_id;
 
             let client_arc_clone = angelone_client.clone();
@@ -801,10 +841,10 @@ impl TradeEngine {
     //     let entry_req = PlaceOrderReq::new(
     //         self.trading_symbol.clone(),
     //         self.symbol_token.clone(),
-    //         self.transaction_type,
+    //         self.trade_setup.transaction_type,
     //     )
     //     .exchange(self.exchange_type)
-    //     .quantity(self.quantity)
+    //     .quantity(self.trade_setup.quantity)
     //     .product_type(ProductType::IntraDay);
     //     self.entry_req = Some(entry_req);
     // }
@@ -814,14 +854,14 @@ impl TradeEngine {
     //     let exit_req = PlaceOrderReq::new(
     //         self.trading_symbol.clone(),
     //         self.symbol_token.clone(),
-    //         if self.transaction_type == TransactionType::BUY {
+    //         if self.trade_setup.transaction_type == TransactionType::BUY {
     //             TransactionType::SELL
     //         } else {
     //             TransactionType::BUY
     //         },
     //     )
     //     .exchange(self.exchange_type)
-    //     .quantity(self.quantity)
+    //     .quantity(self.trade_setup.quantity)
     //     .product_type(ProductType::IntraDay);
     //     self.exit_req = Some(exit_req);
     // }
@@ -847,16 +887,16 @@ impl TradeEngine {
         // self.entry_req = Some(entry_req);
 
         // clientid-engineid-strategy-trade_id
-        let order_tag = format!("{}-{}", self.trade_engine_id, "0");
+        let order_tag = format!("{}-{}", self.trade_setup.trade_engine_id, "0");
         println!("\nOrder tag for entry: {}", order_tag);
 
         let entry_req = PlaceOrderReq::new(
             self.trading_symbol.clone(),
             self.symbol_token.clone(),
-            self.transaction_type,
+            self.trade_setup.transaction_type,
         )
         .exchange(self.exchange_type)
-        .quantity(self.quantity)
+        .quantity(self.trade_setup.quantity)
         .product_type(ProductType::IntraDay)
         .order_tag(order_tag);
         self.entry_req = Some(entry_req);
@@ -879,21 +919,21 @@ impl TradeEngine {
         // self.exit_req = Some(exit_req);
 
         // clientid-engineid-strategy-close position-trade_id
-        let order_tag = format!("{}-{}", self.trade_engine_id, self.trade_id);
+        let order_tag = format!("{}-{}", self.trade_setup.trade_engine_id, self.trade_id);
 
         println!("\nOrder tag for exit: {}", order_tag);
 
         let exit_req = PlaceOrderReq::new(
             self.trading_symbol.clone(),
             self.symbol_token.clone(),
-            if self.transaction_type == TransactionType::BUY {
+            if self.trade_setup.transaction_type == TransactionType::BUY {
                 TransactionType::SELL
             } else {
                 TransactionType::BUY
             },
         )
         .exchange(self.exchange_type)
-        .quantity(self.quantity)
+        .quantity(self.trade_setup.quantity)
         .product_type(ProductType::IntraDay)
         .order_tag(order_tag);
         self.exit_req = Some(exit_req);

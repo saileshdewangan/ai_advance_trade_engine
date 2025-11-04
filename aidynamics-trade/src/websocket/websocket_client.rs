@@ -11,7 +11,7 @@ use tokio_tungstenite::tungstenite::protocol::Message as ws_message;
 
 use crate::order::PlaceOrderReq;
 use crate::trade_engine::TradeEngine;
-use crate::trade_engine::TradeEngineUpdates;
+use crate::trade_engine::TradeSetup;
 // use crate::trade_engine::TradeEngineConfig;
 use crate::trade_engine::TradeRes;
 use crate::websocket::angel_one_websocket::SubscriptionExchange;
@@ -84,7 +84,7 @@ pub enum Signal {
         /// client id
         client_id: u32,
         /// variants data to be updated
-        config: TradeEngineUpdates,
+        config: TradeSetup,
     },
 
     /// Removing trade engine
@@ -101,7 +101,7 @@ pub enum Signal {
         client_id: u32,
 
         /// Config to update fields
-        config: TradeEngineUpdates,
+        config: TradeSetup,
     },
     /// General message
     #[serde(rename = "message")]
@@ -214,7 +214,6 @@ pub enum Signal {
     //     /// Order req to place
     //     order_req: PlaceOrderReq,
     // },
-
     #[serde(rename = "square_off_acknowledge")]
     /// Acknowledgement from rust server to nodejs to square off
     SquaredOff {
@@ -223,7 +222,7 @@ pub enum Signal {
         /// Order req to place
         order_req: PlaceOrderReq,
         /// Client id
-        client_id:u32
+        client_id: u32,
     },
 
     #[serde(rename = "square_off_reject")]
@@ -355,21 +354,23 @@ impl WebSocketClient {
                                                         let mut trade_engine =
                                                             TradeEngine::default();
                                                         trade_engine.client_id = client_id;
-                                                        trade_engine.strategy = config.strategy;
-                                                        trade_engine.symbol = config.symbol;
-                                                        trade_engine.max_price = config.max_price;
-                                                        trade_engine.max_trades = config.max_trades;
-                                                        trade_engine.max_loss = config.max_loss;
-                                                        trade_engine.sl = config.sl;
-                                                        trade_engine.trailing_sl =
-                                                            config.trailing_sl;
-                                                        trade_engine.quantity = config.quantity;
-                                                        trade_engine.target = config.target;
-                                                        trade_engine.transaction_type =
-                                                            config.transaction_type;
-                                                        trade_engine.segment =
+                                                        // trade_engine.trade_setup.strategy = config.strategy;
+                                                        // trade_engine.trade_setup.symbol = config.symbol;
+                                                        // trade_engine.trade_setup.max_price = config.max_price;
+                                                        // trade_engine.trade_setup.max_trades = config.max_trades;
+                                                        // trade_engine.trade_setup.max_loss = config.max_loss;
+                                                        // trade_engine.trade_setup.sl = config.sl;
+                                                        // trade_engine.trade_setup.trailing_sl =
+                                                        //     config.trailing_sl;
+                                                        // trade_engine.trade_setup.quantity = config.quantity;
+                                                        // trade_engine.trade_setup.target = config.target;
+                                                        // trade_engine.trade_setup.transaction_type =
+                                                        //     config.transaction_type;
+                                                        // trade_engine.trade_setup.segment =
+                                                        //     SubscriptionExchange::NSEFO;
+                                                        trade_engine.trade_setup = config;
+                                                        trade_engine.trade_setup.segment =
                                                             SubscriptionExchange::NSEFO;
-
                                                         tx_clone
                                                             .send(Signal::NewTradeEngine(
                                                                 trade_engine,
@@ -426,9 +427,7 @@ impl WebSocketClient {
 
                                                         // Send the signal with trade_engine_id to stop the trade engine
                                                         if let Err(e) = tx_clone
-                                                            .send(Signal::Disconnect(
-                                                                client_id,
-                                                            ))
+                                                            .send(Signal::Disconnect(client_id))
                                                             .await
                                                         {
                                                             eprintln!("Failed to send Disconnect signal: {:?}", e);

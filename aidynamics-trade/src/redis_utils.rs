@@ -18,9 +18,9 @@ use crate::order::PlaceOrderReq;
 use crate::trade_engine::NewTrade;
 use crate::trade_engine::Strategy;
 use crate::trade_engine::TradeEngine;
-use crate::trade_engine::TradeEngineUpdates;
 // use crate::trade_engine::TradeEngineConfig;
 use crate::trade_engine::TradeRes;
+use crate::trade_engine::TradeSetup;
 use crate::trade_engine::TradeStatus;
 use crate::types::TransactionType;
 // use crate::websocket::angel_one_websocket::SubscriptionExchange;
@@ -123,7 +123,7 @@ pub enum Signal {
         /// client id
         client_id: u32,
         /// variants data to be updated
-        config: TradeEngineUpdates,
+        config: TradeSetup,
     },
 
     /// Add Trade engine with configuration when new status of setup is updated
@@ -151,7 +151,7 @@ pub enum Signal {
         client_id: u32,
 
         /// Config to update fields
-        config: TradeEngineUpdates,
+        config: TradeSetup,
     },
 
     /// update trade status this is required because

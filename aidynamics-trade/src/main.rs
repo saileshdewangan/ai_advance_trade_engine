@@ -71,7 +71,7 @@ use tokio_tungstenite::{connect_async, WebSocketStream};
 // use tokio::sync::mpsc;
 // use tokio_tungstenite::tungstenite::protocol::Message;
 // use tokio_tungstenite::connect_async;
-use aidynamics_trade::client_node::ClientNode;
+use aidynamics_trade::client_node::{Channels, ClientNode};
 use redis::{AsyncCommands, Commands, RedisResult};
 use tracing_subscriber::Layer;
 use tracing_subscriber::{fmt, layer::SubscriberExt, Registry};
@@ -669,10 +669,12 @@ async fn main() {
                         let mut new_client_node = ClientNode {
                             client_id,
                             trade_engines: HashMap::new(),
-                            tx_broadcast: tx_broadcast_clone.clone(),
-                            tx_main: tx_main.clone(),
-                            tx_redis: tx_redis.clone(),
-                            tx_angelone_sender: tx_aows.clone(),
+                            channels: Channels {
+                                broadcast: tx_broadcast_clone.clone(),
+                                main: tx_main.clone(),
+                                redis: tx_redis.clone(),
+                                angelone_sender: tx_aows.clone(),
+                            },
                             active_trade_ids: HashSet::new(),
                             handler_ids: HashSet::new(),
                             angelone_client: angelone_client,
@@ -714,7 +716,7 @@ async fn main() {
                 Signal::NewTradeEngine(new_engine) => {
                     let engine = new_engine.clone();
                     let client_id = engine.client_id;
-                    let trade_engine_id = engine.trade_engine_id;
+                    let trade_engine_id = engine.trade_setup.trade_engine_id;
                     if !client_nodes_set.contains(&client_id) {
                         println!("\n NEW CLIENT NODE FOR CLIENT ID : {:?}", client_id);
                         client_nodes_set.insert(client_id);
@@ -731,10 +733,12 @@ async fn main() {
                         let mut new_client_node = ClientNode {
                             client_id,
                             trade_engines: new_trade_engines,
-                            tx_broadcast: tx_broadcast_clone.clone(),
-                            tx_main: tx_main.clone(),
-                            tx_redis: tx_redis.clone(),
-                            tx_angelone_sender: tx_aows.clone(),
+                            channels: Channels {
+                                broadcast: tx_broadcast_clone.clone(),
+                                main: tx_main.clone(),
+                                redis: tx_redis.clone(),
+                                angelone_sender: tx_aows.clone(),
+                            },
                             // tx_order_processor: tx_order_processor.clone(),
                             active_trade_ids: {
                                 let mut set = HashSet::new();
